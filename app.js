@@ -2,22 +2,30 @@ require('dotenv').config()
 const { Configuration, OpenAIApi } = require('openai')
 const readline = require('readline')
 
+const config = {
+  intro: [
+    'Available commands:',
+    ' 1. clear: Clears chat history',
+    ' 2. exit: Exits the program'
+  ],
+  chatApiParams: {
+    model: 'gpt-3.5-turbo',
+    max_tokens: 2048,
+  }
+}
+
 const openai = new OpenAIApi(new Configuration({apiKey: process.env.OPENAI_API_KEY}))
-
-const rl = readline.createInterface({input: process.stdin, output: process.stdout, terminal: false})
-
 let history = []
 
+const rl = readline.createInterface({input: process.stdin, output: process.stdout, terminal: false})
 rl.setPrompt('> ')
-
 const prompt = () => {
+  rl.resume()
   console.log('────────────────────────────────────────────────────────────────────────────────────')
   rl.prompt()
 }
 
-console.log('Available commands:\n' +
-  '1. clear: Clears chat history\n' +
-  '2. exit: Exits the program\n')
+config.intro.forEach(line => console.log(line))
 prompt()
 
 rl.on('line', (line) => {
@@ -34,17 +42,14 @@ rl.on('line', (line) => {
     default:
       rl.pause()
       history.push({role: 'user', content: line})
-      openai.createChatCompletion({
-        model: 'gpt-3.5-turbo',
-        messages: history,
-        max_tokens: 2048,
-      }).then(res => {
-        res.data.choices.forEach(choice => {
-          history.push(choice.message)
-          console.log(choice.message.content)
+      openai.createChatCompletion(Object.assign(config.chatApiParams, {messages: history}))
+        .then(res => {
+          res.data.choices.forEach(choice => {
+            history.push(choice.message)
+            console.log(choice.message.content)
+          })
         })
-        rl.resume()
-        prompt()
-      })
+        .catch(err => console.error(err))
+        .finally(prompt)
   }
 })
