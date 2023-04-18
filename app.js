@@ -1,10 +1,12 @@
 import dotenv from 'dotenv'
-import { Configuration as OpenAIConfig, OpenAIApi, ChatCompletionRequestMessageRoleEnum as Role } from 'openai'
+import fs from 'fs'
 import readline from 'readline'
+import untildify from 'untildify'
 import ora from 'ora'
 import chalk from 'chalk'
-import clipboard from 'clipboardy'
 import cliMd from 'cli-markdown'
+import clipboard from 'clipboardy'
+import { Configuration as OpenAIConfig, OpenAIApi, ChatCompletionRequestMessageRoleEnum as Role } from 'openai'
 import {google} from 'googleapis'
 import {readPdfText} from 'pdf-text-reader'
 
@@ -72,12 +74,16 @@ const prompts = {
     * copy / cp       : Copy last message to clipboard
     * help / h        : Show this message
     * exit / quit / q : Exit the program
-    For multiline chats press PageDown`,
+    
+    - For multiline chats press PageDown
+    - Use Up/Down array keys to travel through history
+    `,
     onExit: chalk.italic('Bye!'),
     onClear: chalk.italic('Chat history cleared!'),
     onSearch: chalk.italic(`Searching the web`),
     searchInfo: chalk.italic('(inferred from Google search)'),
     onQuery: chalk.italic(`Asking ${config.chatApiParams.model}`),
+    docQuery: (file) => chalk.italic(`Asking ${config.chatApiParams.model} about ${file}`),
     onCopy: (text) => chalk.italic(`Copied last message to clipboard (${text.length} characters)`)
   }
 }
@@ -101,9 +107,13 @@ process.stdin.on('keypress', (letter, key)=> {
   }
 })
 
-// TODO: support other file types like .txt and Word docs
 const docToText = (file) => {
-  return readPdfText(file).then(pages => pages.map(page => page.lines).join('\n\n'))
+  file = untildify(file)
+  if (fs.existsSync(file)) {
+    if (file.endsWith('.pdf')) return readPdfText(file).then(pages => pages.map(page => page.lines).join('\n\n'))
+    // TODO: support other file types like .txt and Word docs
+  }
+  return Promise.resolve()
 }
 
 const googleSearch = (query) => config.googleSearchAuth.auth && config.googleSearchAuth.cx ?
@@ -165,12 +175,13 @@ rl.on('line', (line) => {
           })
           .catch(err => handleError(spinner, err))
       }
-      return chat({message: line.replace(newLinePlaceholder, '\n')}).finally(prompts.next)
+      return chat({message: line.replace(newLinePlaceholder, '\n').trim()}).finally(prompts.next)
   }
 })
 
 /* TODO
 - PDF
+- Truncate history
 - Image rendering
 - Force internet search
 - Gif of terminal

@@ -15,6 +15,7 @@
     "googleapis": "^118.0.0",
     "openai": "^3.2.1",
     "ora": "^6.3.0",
-    "pdf-text-reader": "^3.0.2"
+    "pdf-text-reader": "^3.0.2",
+    "untildify": "^4.0.0"
   }
 }

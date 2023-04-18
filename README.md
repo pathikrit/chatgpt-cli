@@ -1,6 +1,6 @@
 ChatGPT CLI
 ---
-This is a tiny (<500 LoC) program written in node.js to run ChatGPT in your terminal that supports [web-browsing](#web-browsing) and [chatting with documents](#chat-with-document)
+This is a tiny (<500 LoC) program written in node.js to run ChatGPT in your terminal that supports [web-browsing](#web-browsing)
 
 1. Install `yarn` and `node` e.g. using `brew`:
 ```shell
@@ -68,6 +68,3 @@ Now you will get:
 ⠸ Searching the web ...
 ✔ Today in New York City, the temperature will be mostly cloudy with a high of 58°F (14°C) and a low of 46°F (8°C). There will be partly cloudy skies in the morning, which will become cloudy during the afternoon. There is a chance of light winds from the west, southwest.
 ```
-
-### Chat with document
-TBD
