@@ -9,8 +9,8 @@ dotenv.config()
 const config = {
   intro: [
     'Available commands:',
-    ' * clear: Clears chat history',
-    ' * exit: Exits the program'
+    ' * clear / clr: Clears chat history',
+    ' * exit / quit / q: Exits the program'
   ],
   chatApiParams: {
     model: 'gpt-3.5-turbo',
@@ -51,9 +51,10 @@ rl.on('line', (line) => {
     case 'quit':
     case 'exit': process.exit()
 
+    case 'clr':
     case 'clear':
       history = Array.from(config.systemPrompt)
-      console.log('Chat history is now cleared!')
+      console.log('Chat history cleared!')
       return prompt()
 
     default:
