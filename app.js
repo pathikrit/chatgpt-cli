@@ -1,5 +1,5 @@
 import dotenv from 'dotenv'
-import { Configuration, OpenAIApi } from 'openai'
+import { Configuration as OpenAIConfig, OpenAIApi, ChatCompletionRequestMessageRoleEnum as Role } from 'openai'
 import readline from 'readline'
 import ora from 'ora'
 import chalk from 'chalk'
@@ -20,19 +20,7 @@ const config = {
   openAiApiKey: process.env.OPENAI_API_KEY
 }
 
-if (!config.openAiApiKey) {
-  console.error(prompts.errors.missingOpenAiApiKey)
-  process.exit(-1)
-}
-
 const prompts = {
-  intro: [
-    'Available commands:',
-    ' * clear / clr     : Clear chat history',
-    ' * copy / cp       : Copy last message to clipboard',
-    ' * exit / quit / q : Exit the program',
-    'For multiline chats, press PageDown'
-  ],
   next: () => {
     rl.resume()
     console.log('────────────────────────────────────────────────────────────────────────────────────')
@@ -71,6 +59,13 @@ const prompts = {
     nothingToCopy: 'History is empty; nothing to copy'
   },
   info: {
+    intro: [
+      'Available commands:',
+      ' * clear / clr     : Clear chat history',
+      ' * copy / cp       : Copy last message to clipboard',
+      ' * exit / quit / q : Exit the program',
+      'For multiline chats, press PageDown'
+    ],
     onExit: chalk.italic('Bye!'),
     onClear: chalk.italic('Chat history cleared!'),
     onSearch: chalk.italic(`Searching the web`),
@@ -80,9 +75,13 @@ const prompts = {
   }
 }
 
-const newHistory = () => prompts.system.map(prompt => {return {role: 'system', content: prompt}})
+if (!config.openAiApiKey) {
+  console.error(prompts.errors.missingOpenAiApiKey)
+  process.exit(-1)
+}
+const openai = new OpenAIApi(new OpenAIConfig({apiKey: config.openAiApiKey}))
 
-const openai = new OpenAIApi(new Configuration({apiKey: config.openAiApiKey}))
+const newHistory = () => prompts.system.map(prompt => {return {role: Role.System, content: prompt}})
 let history = newHistory()
 
 const rl = readline.createInterface({input: process.stdin, output: process.stdout, completer: prompts.completer})
@@ -102,7 +101,7 @@ const googleSearch = (query) => config.googleSearchAuth.auth && config.googleSea
     .then(results => results.length ? Promise.resolve(results.join('\n')) : Promise.reject(prompts.errors.noResults))
   : Promise.reject(prompts.errors.missingGoogleKey)
 
-prompts.intro.forEach(line => console.log(line))
+prompts.info.intro.forEach(line => console.log(line))
 prompts.next()
 
 rl.on('line', (line) => {
@@ -118,7 +117,7 @@ rl.on('line', (line) => {
       return prompts.next()
 
     case 'cp': case 'copy':
-      const content = history.findLast(item => item.role === 'assistant')?.content
+      const content = history.findLast(item => item.role === Role.Assistant)?.content
       if (content) {
         clipboard.writeSync(content)
         console.log(prompts.info.onCopy(content))
@@ -131,7 +130,7 @@ rl.on('line', (line) => {
       const chat = (params) => {
         const spinner = params.spinner ?? ora().start()
         spinner.text = prompts.info.onQuery
-        history.push({role: 'user', content: params.message})
+        history.push({role: Role.User, content: params.message})
         return openai.createChatCompletion(Object.assign(config.chatApiParams, {messages: history}))
           .then(res => {
             const message = res.data.choices[0].message
@@ -156,7 +155,6 @@ rl.on('line', (line) => {
 
 /* TODO
 - PDF
-
 - Image rendering
 - Explicit internet browsing
 - Gif of terminal
