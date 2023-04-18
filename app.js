@@ -43,15 +43,15 @@ prompt()
 
 rl.on('line', (line) => {
   switch (line.toLowerCase().trim()) {
+    case '': return
+    case 'exit': process.exit()
+
     case 'clear':
       history = config.systemPrompt
       console.log('Chat history is now cleared!')
       prompt()
       return
-    case 'exit':
-      process.exit()
-    case '':
-      return
+
     default:
       rl.pause()
       history.push({role: 'user', content: line})
@@ -68,3 +68,9 @@ rl.on('line', (line) => {
         .finally(prompt)
   }
 })
+
+/* TODO
+1. Streaming
+2. Internet browsing
+3. PDF
+ */
