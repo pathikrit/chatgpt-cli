@@ -72,6 +72,7 @@ const prompts = {
     onExit: chalk.italic('Bye!'),
     onClear: chalk.italic('Chat history cleared!'),
     onSearch: `Browsing the internet ...`,
+    searchInfo: chalk.italic('(inferred from Google search)'),
     onQuery: `Asking ${config.chatApiParams.model} ...`
   }
 }
@@ -107,7 +108,9 @@ rl.on('line', (line) => {
 
     default:
       rl.pause()
+      const handleError = (spinner, err) => spinner.fail(err.stack ?? err.message ?? err)
       const spinner = ora().start(prompts.info.onQuery)
+
       const chat = (params) => {
         history.push({role: 'user', content: params.message})
         return openai.createChatCompletion(Object.assign(config.chatApiParams, {messages: history}))
@@ -122,15 +125,15 @@ rl.on('line', (line) => {
               const webSpinner = ora().start(prompts.info.onSearch)
               return googleSearch(params.message)
                 .then(text => chat({message: prompts.webSearch(line, text), nested: true}))
-                .then(res => {webSpinner.stop(); return res})
-                .catch(err => webSpinner.fail(err.stack ?? err.message ?? err))
+                .then(res => {webSpinner.stop(); console.log(prompts.info.searchInfo); return res})
+                .catch(err => handleError(webSpinner, err))
             }
             return Promise.resolve(spinner.succeed(output))
           })
-          .catch(err => spinner.fail(err.stack ?? err.message ?? err))
+          .catch(err => handleError(spinner, err))
           .finally(() => { if (!params.nested) prompts.next() })
       }
-      chat({message: line})
+      return chat({message: line})
   }
 })
 
@@ -140,6 +143,6 @@ rl.on('line', (line) => {
 - PDF
 - copy last response to clipboard
 - Explicit internet browsing
-- Say from Google prefix
 - Gif of terminal
+- spinner.promisify
 */
