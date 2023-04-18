@@ -9,6 +9,7 @@ import clipboard from 'clipboardy'
 import { Configuration as OpenAIConfig, OpenAIApi, ChatCompletionRequestMessageRoleEnum as Role } from 'openai'
 import {google} from 'googleapis'
 import {readPdfText} from 'pdf-text-reader'
+import {encode} from 'gpt-3-encoder'
 
 dotenv.config()
 const config = {
