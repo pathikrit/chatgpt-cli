@@ -1,6 +1,13 @@
 ChatGPT CLI
 ---
-This is a tiny toy program to run ChatGPT in your terminal:
+This is a tiny toy program written in node.js to run ChatGPT in your terminal:
+
+1. Install `yarn` and `node` e.g. using `brew`:
+```shell
+brew install node yarn
+```
+
+2. Start the app:
 ```shell
 export OPENAI_API_KEY=XXXXXXXX # Get from https://platform.openai.com/account/api-keys
 yarn && node app.js

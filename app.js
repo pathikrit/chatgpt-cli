@@ -10,18 +10,35 @@ const google = googleapis.customsearch('v1').cse
 dotenv.config()
 
 const config = {
+  chatApiParams: {
+    model: 'gpt-3.5-turbo',
+    max_tokens: 2048,
+  },
+  googleSearchAuth: {
+    auth: process.env.GOOGLE_CUSTOM_SEARCH_API_KEY,
+    cx: process.env.GOOGLE_CUSTOM_SEARCH_ENGINE_ID,
+  }
+}
+
+const prompts = {
   intro: [
     'Available commands:',
     ' * clear / clr: Clear chat history',
     ' * exit / quit / q: Exit the program'
   ],
-  chatApiParams: {
-    model: 'gpt-3.5-turbo',
-    max_tokens: 2048,
+  next: () => {
+    rl.resume()
+    console.log('────────────────────────────────────────────────────────────────────────────────────')
+    rl.prompt()
   },
-  systemPrompts: [
+  completer: (line) => {
+    const completions = ['clear', 'exit', 'quit']
+    const hits = completions.filter(c => c.startsWith(line.toLowerCase().trim()))
+    return [hits.length ? hits : completions, line]
+  },
+  system: [
     'Always use code blocks with the appropriate language tags',
-    'If the question needs real-time information that you may not have access to, simply reply with "I do not have real-time information" and nothing else'
+    'If the answer may have changed since your cut-off date, simply reply with "I do not have real-time information" and nothing else'
   ],
   needWebBrowsing: [
     'not have access to real-time',
@@ -29,46 +46,37 @@ const config = {
     'not able to provide real-time',
     'not have real-time',
     'as of my training data',
-    "as of september 2021"
+    "as of september 2021",
+    "as of my programmed cut-off date"
   ],
-  googleSearchAuth: {
-    auth: process.env.GOOGLE_CUSTOM_SEARCH_API_KEY,
-    cx: process.env.GOOGLE_CUSTOM_SEARCH_ENGINE_ID,
-  }
+  webSearch: (query, result) =>
+    `Okay, I found the following up-to-date web search results for "${query}":
+    
+      ${result}
+      
+    Using the above search results, can you now take a best guess at answering ${query}. 
+    Exclude the disclaimer note about this information might be inaccurate or subject to change. 
+    Be short and don't say "based on the search results".`
 }
 
-const newHistory = () => config.systemPrompts.map(prompt => {return {role: 'system', content: prompt}})
+const newHistory = () => prompts.system.map(prompt => {return {role: 'system', content: prompt}})
 
 const openai = new OpenAIApi(new Configuration({apiKey: process.env.OPENAI_API_KEY}))
 let history = newHistory()
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-  completer: (line) => {
-    const completions = ['clear', 'exit', 'quit']
-    const hits = completions.filter(c => c.startsWith(line.toLowerCase().trim()))
-    return [hits.length ? hits : completions, line]
-  }
-})
-
-const prompt = () => {
-  rl.resume()
-  console.log('────────────────────────────────────────────────────────────────────────────────────')
-  rl.prompt()
-}
+const rl = readline.createInterface({input: process.stdin, output: process.stdout, completer: prompts.completer})
 
 const googleSearch = (query) => google
   .list(Object.assign(config.googleSearchAuth, {q: query}))
   .then(response => response.data.items.filter(result => result.snippet).map(result => result.snippet))
   .then(results => results.length ? Promise.resolve(results.join('\n')) : Promise.reject('No search result found'))
 
-config.intro.forEach(line => console.log(line))
-prompt()
+prompts.intro.forEach(line => console.log(line))
+prompts.next()
 
 rl.on('line', (line) => {
   switch (line.toLowerCase().trim()) {
-    case '': return prompt()
+    case '': return prompts.next()
     case 'q': case 'quit': case 'exit':
       console.log(chalk.italic('Bye!'))
       process.exit()
@@ -76,13 +84,11 @@ rl.on('line', (line) => {
     case 'clr': case 'clear':
       history = newHistory()
       console.log(chalk.italic('Chat history cleared!'))
-      return prompt()
+      return prompts.next()
 
     default:
       rl.pause()
-
       const spinner = ora().start(`Asking ${config.chatApiParams.model} ...`)
-
       const chat = (params) => {
         history.push({role: 'user', content: params.message})
         return openai.createChatCompletion(Object.assign(config.chatApiParams, {messages: history}))
@@ -90,22 +96,13 @@ rl.on('line', (line) => {
             const message = res.data.choices[0].message
             history.push(message)
             const content = message.content
-            const needWebBrowsing = !params.nested && config.needWebBrowsing.some(frag => content.toLowerCase().includes(frag))
+            const needWebBrowsing = !params.nested && prompts.needWebBrowsing.some(frag => content.toLowerCase().includes(frag))
             const output = content.includes('```') ? cliMd(content).trim() : chalk.bold(content)
             if (needWebBrowsing) {
               spinner.warn(chalk.dim(output))
               const webSpinner = ora().start(`Browsing the internet ...`)
-              return googleSearch(params.message).then(text => chat({
-                  message: `Okay, I found the following up-to-date web search results for "${line}":
-                  
-                      ${text}
-                      
-                    Using the above search results, can you now take a best guess at answering ${line}. 
-                    Exclude the disclaimer note about this information might be inaccurate or subject to change. 
-                    Be short and don't say "based on the search results".
-                  `,
-                  nested: true
-                }))
+              return googleSearch(params.message)
+                .then(text => chat({message: prompts.webSearch(line, text), nested: true}))
                 .then(res => {webSpinner.stop(); return res})
             } else {
               return Promise.resolve(spinner.succeed(output))
@@ -115,16 +112,19 @@ rl.on('line', (line) => {
             spinner.fail(err.stack)
             console.error(err.message, history)
           })
-          .finally(() => { if (!params.nested) prompt() })
+          .finally(() => { if (!params.nested) prompts.next() })
       }
-
       chat({message: line})
   }
 })
 
 /* TODO
-1. Streaming
-2. PDF
-3. copy last response to clipboard
-4. Explicit internet browsing
- */
+- Check missing key
+- multiline input
+- Streaming
+- PDF
+- copy last response to clipboard
+- Explicit internet browsing
+- Say from Google prefix
+- Gif of terminal
+*/
