@@ -6,7 +6,7 @@ export OPENAI_API_KEY=XXXXXXXX # Get from https://platform.openai.com/account/ap
 yarn && node app.js
 ```
 
-### Sample interaction
+## Sample interaction
 ```
 Available commands:
  * clear / clr: Clear chat history
@@ -36,9 +36,21 @@ In water, it be.
 Bye!
 ```
 
-### Web Browsing
+## Web Browsing
 To enable browsing, you need to export Google API keys:
 ```shell
 export GOOGLE_CUSTOM_SEARCH_ENGINE_ID=XXXXX # Get from https://www.google.com/cse/create/new
 export GOOGLE_CUSTOM_SEARCH_API_KEY=XXXXX # Get from https://developers.google.com/custom-search/v1/introduction
+```
+Before:
+```
+> What is price of AAPL?
+I do not have real-time information. Please provide more context or specify a date and time for which you'd like the price of AAPL.
+```
+
+After:
+```shell
+> What is stock price of AAPL?
+⠇ Browsing the internet since the answer might have changed since the cutoff date of gpt-3.5-turbo
+The most recent closing stock price of AAPL was $165.23, with a 52-week high of $176.15 and an average price target of $170.18 according to 31 Wall Street analysts.
 ```

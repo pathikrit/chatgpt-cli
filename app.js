@@ -20,7 +20,7 @@ const config = {
   },
   systemPrompts: [
     'Always use code blocks with the appropriate language tags',
-    'If the question needs real-time information that you may not have access to, simply reply with "I do not have real-time information"'
+    'If the question needs real-time information that you may not have access to, simply reply with "I do not have real-time information" and nothing else'
   ],
   needWebBrowsing: [
     'not have access to real-time',
@@ -28,6 +28,7 @@ const config = {
     'not able to provide real-time',
     'not have real-time',
     'as of my training data',
+    "as of september 2021"
   ],
   googleSearchAuth: {
     auth: process.env.GOOGLE_CUSTOM_SEARCH_API_KEY,
@@ -61,8 +62,6 @@ const googleSearch = (query) => google
   .then(response => response.data.items.filter(result => result.snippet).map(result => result.snippet))
   .then(results => results.length ? Promise.resolve(results.join('\n')) : Promise.reject('No search result found'))
 
-const needWebBrowsing = (response) => config.needWebBrowsing.some(frag => response.toLowerCase().includes(frag))
-
 config.intro.forEach(line => console.log(line))
 prompt()
 
@@ -88,28 +87,36 @@ rl.on('line', (line) => {
           .then(res => {
             spinner.stop()
             const message = res.data.choices[0].message
-            const output = message.content.includes('```') ? cliMd(message.content).trim() : message.content
-            return Promise.resolve(console.log(output))
+            history.push(message)
+            const content = message.content
+            const needWebBrowsing = !params.nested && config.needWebBrowsing.some(frag => content.toLowerCase().includes(frag))
+            if (needWebBrowsing) {
+              return googleSearch(params.message).then(text => chat({
+                  message: `Okay, I found the following up-to-date web search results for "${line}":
+                  
+                      ${text}
+                      
+                    Using the above search results, can you now take a best guess at answering ${line}. 
+                    Exclude the disclaimer note about this information might be inaccurate or subject to change. 
+                    Be short and don't say "based on the search results
+                  `,
+                  spinnerMessage: `Browsing the internet since the answer might have changed since the cutoff date of ${config.chatApiParams.model}`,
+                  nested: true
+                }))
+            } else {
+              return Promise.resolve(console.log(content.includes('```') ? cliMd(content).trim() : content))
+            }
           })
           .catch(err => spinner.fail(err.stack))
-          .finally(prompt)
+          .finally(() => { if (!params.nested) prompt() })
       }
 
-      chat({
-        message: line,
-        spinnerMessage: `Asking ${config.chatApiParams.model}`
-      })
-
-          // if (needWebBrowsing(res.data.choices[0].message.content)) {
-          //   return googleSearch(line)
-          //     //.then(text => chat(`I found the following web search results for "${line}":\n\n${text}\n\nUsing the above search results, can you now take a best guess at answering ${line}`))
-          //     .then(text => Promise.resolve(console.log(text)))
-
+      chat({message: line, spinnerMessage: `Asking ${config.chatApiParams.model}`})
   }
 })
 
 /* TODO
 1. Streaming
-2. Internet browsing
-3. PDF
+2. PDF
+3. copy last response to clipboard
  */
