@@ -59,13 +59,12 @@ const prompts = {
     nothingToCopy: 'History is empty; nothing to copy'
   },
   info: {
-    intro: [
-      'Available commands:',
-      ' * clear / clr     : Clear chat history',
-      ' * copy / cp       : Copy last message to clipboard',
-      ' * exit / quit / q : Exit the program',
-      'For multiline chats, press PageDown'
-    ],
+    help: `Available commands:
+    * clear / clr     : Clear chat history
+    * copy / cp       : Copy last message to clipboard
+    * help / h        : Show this message
+    * exit / quit / q : Exit the program
+    For multiline chats, press PageDown`,
     onExit: chalk.italic('Bye!'),
     onClear: chalk.italic('Chat history cleared!'),
     onSearch: chalk.italic(`Searching the web`),
@@ -101,7 +100,7 @@ const googleSearch = (query) => config.googleSearchAuth.auth && config.googleSea
     .then(results => results.length ? Promise.resolve(results.join('\n')) : Promise.reject(prompts.errors.noResults))
   : Promise.reject(prompts.errors.missingGoogleKey)
 
-prompts.info.intro.forEach(line => console.log(line))
+console.log(prompts.info.help)
 prompts.next()
 
 rl.on('line', (line) => {
@@ -110,6 +109,10 @@ rl.on('line', (line) => {
     case 'q': case 'quit': case 'exit':
       console.log(prompts.info.onExit)
       process.exit()
+
+    case 'h': case 'help':
+      console.log(prompts.info.help)
+      return prompts.next()
 
     case 'clr': case 'clear':
       history = newHistory()
