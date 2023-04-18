@@ -16,11 +16,14 @@ const config = {
     model: 'gpt-3.5-turbo',
     max_tokens: 2048,
   },
-  systemPrompt: [{role: 'system', content: 'Always use code blocks with the appropriate language tags'}]
+  systemPrompt: [{
+    role: 'system',
+    content: 'Always use code blocks with the appropriate language tags. If the question needs real-time information that you may not have, simply reply with "Check Internet"'
+  }]
 }
 
 const openai = new OpenAIApi(new Configuration({apiKey: process.env.OPENAI_API_KEY}))
-let history = config.systemPrompt
+let history = Array.from(config.systemPrompt)
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -47,7 +50,7 @@ rl.on('line', (line) => {
     case 'exit': process.exit()
 
     case 'clear':
-      history = config.systemPrompt
+      history = Array.from(config.systemPrompt)
       console.log('Chat history is now cleared!')
       prompt()
       return
