@@ -1,6 +1,6 @@
 ChatGPT CLI
 ---
-This is a tiny toy program written in node.js to run ChatGPT in your terminal:
+This is a tiny (<500 LoC) program written in node.js to run ChatGPT in your terminal that supports [web-browsing](#web-browsing) and [chatting with documents](#chat-with-document)
 
 1. Install `yarn` and `node` e.g. using `brew`:
 ```shell
@@ -16,10 +16,11 @@ yarn && node app.js
 ## Sample interaction
 ```
 Available commands:
- * clear / clr     : Clear chat history
- * copy / cp       : Copy last message to clipboard
- * exit / quit / q : Exit the program
-For multiline chats, press PageDown
+    * clear / clr     : Clear chat history
+    * copy / cp       : Copy last message to clipboard
+    * help / h        : Show this message
+    * exit / quit / q : Exit the program
+For multiline chat, press PageDown
 ────────────────────────────────────────────────────────────────────────────────────
 > Hi! My name is Rick!
 Hi Rick! How can I assist you today?
@@ -49,6 +50,7 @@ Bye!
 ```
 
 ## Web Browsing
+Some queries depend on up-to-date info e.g.:
 ```
 > Whats the weather like in nyc today?
 ⚠ I do not have real-time information. Please check a weather website or app for the current weather in NYC.
@@ -66,3 +68,6 @@ Now you will get:
 ⠸ Searching the web ...
 ✔ Today in New York City, the temperature will be mostly cloudy with a high of 58°F (14°C) and a low of 46°F (8°C). There will be partly cloudy skies in the morning, which will become cloudy during the afternoon. There is a chance of light winds from the west, southwest.
 ```
+
+### Chat with document
+TBD

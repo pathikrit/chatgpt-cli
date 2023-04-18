@@ -6,6 +6,7 @@ import chalk from 'chalk'
 import clipboard from 'clipboardy'
 import cliMd from 'cli-markdown'
 import {google} from 'googleapis'
+import {readPdfText} from 'pdf-text-reader'
 
 dotenv.config()
 const config = {
@@ -52,6 +53,13 @@ const prompts = {
     Using the above search results, can you now take a best guess at answering ${query}. 
     Exclude the disclaimer note about this information might be inaccurate or subject to change. 
     Be short and don't say "based on the search results".`,
+  chatWithDoc: (text) => `
+    This is some text I extracted from a file:
+    
+    ${text}
+    
+    I would ask more questions about this later. Can you respond with a short 3 sentence summary in markdown bullets form?
+  `,
   errors: {
     missingOpenAiApiKey: chalk.redBright('OPENAI_API_KEY must be set (see https://platform.openai.com/account/api-keys).'),
     missingGoogleKey: 'Cannot search the web since GOOGLE_CUSTOM_SEARCH_CONFIGs are not set',
@@ -64,7 +72,7 @@ const prompts = {
     * copy / cp       : Copy last message to clipboard
     * help / h        : Show this message
     * exit / quit / q : Exit the program
-    For multiline chats, press PageDown`,
+    For multiline chats press PageDown`,
     onExit: chalk.italic('Bye!'),
     onClear: chalk.italic('Chat history cleared!'),
     onSearch: chalk.italic(`Searching the web`),
@@ -84,14 +92,19 @@ const newHistory = () => prompts.system.map(prompt => {return {role: Role.System
 let history = newHistory()
 
 const rl = readline.createInterface({input: process.stdin, output: process.stdout, completer: prompts.completer})
-// HACKHACK: See https://stackoverflow.com/questions/66604677/how-to-detect-shift-enter-in-nodejs-terminal
+// TODO: Hack to get around https://stackoverflow.com/questions/66604677/
 const newLinePlaceholder = '\u2008'
-process.stdin.on("keypress", (letter, key)=> {
-  if (key?.name === "pagedown") {
+process.stdin.on('keypress', (letter, key)=> {
+  if (key?.name === 'pagedown') {
     rl.write(newLinePlaceholder)
     process.stdout.write('\n')
   }
 })
+
+// TODO: support other file types like .txt and Word docs
+const docToText = (file) => {
+  return readPdfText(file).then(pages => pages.map(page => page.lines).join('\n\n'))
+}
 
 const googleSearch = (query) => config.googleSearchAuth.auth && config.googleSearchAuth.cx ?
   google.customsearch('v1').cse
@@ -159,6 +172,6 @@ rl.on('line', (line) => {
 /* TODO
 - PDF
 - Image rendering
-- Explicit internet browsing
+- Force internet search
 - Gif of terminal
 */
