@@ -2,7 +2,7 @@ ChatGPT CLI
 ---
 This is a tiny toy program to run ChatGPT in your terminal:
 ```shell
-export OPENAI_API_KEY=XXXXXXXX # get from https://platform.openai.com/account/api-keys
+export OPENAI_API_KEY=XXXXXXXX # Get from https://platform.openai.com/account/api-keys
 yarn && node app.js
 ```
 
@@ -34,4 +34,11 @@ In water, it be.
 ────────────────────────────────────────────────────────────────────────────────────
 > exit
 Bye!
+```
+
+### Web Browsing
+To enable browsing, you need to export Google API keys:
+```shell
+export GOOGLE_CUSTOM_SEARCH_ENGINE_ID=XXXXX # Get from https://www.google.com/cse/create/new
+export GOOGLE_CUSTOM_SEARCH_API_KEY=XXXXX # Get from https://developers.google.com/custom-search/v1/introduction
 ```

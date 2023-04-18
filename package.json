@@ -10,6 +10,7 @@
   "dependencies": {
     "cli-markdown": "^3.0.3",
     "dotenv": "^16.0.3",
+    "googleapis": "^118.0.0",
     "openai": "^3.2.1",
     "ora": "^6.3.0"
   }
