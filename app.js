@@ -1,22 +1,26 @@
-require('dotenv').config()
-const { Configuration, OpenAIApi } = require('openai')
-const readline = require('readline')
-const ora = require('ora')
+import dotenv from 'dotenv'
+import { Configuration, OpenAIApi } from 'openai'
+import readline from 'readline'
+import ora from 'ora'
+import cliMd from 'cli-markdown'
+
+dotenv.config()
 
 const config = {
   intro: [
     'Available commands:',
-    ' 1. clear: Clears chat history',
-    ' 2. exit: Exits the program'
+    ' * clear: Clears chat history',
+    ' * exit: Exits the program'
   ],
   chatApiParams: {
     model: 'gpt-3.5-turbo',
     max_tokens: 2048,
-  }
+  },
+  systemPrompt: [{role: 'system', content: 'Always use code blocks with the appropriate language tags'}]
 }
 
 const openai = new OpenAIApi(new Configuration({apiKey: process.env.OPENAI_API_KEY}))
-let history = []
+let history = config.systemPrompt
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -40,7 +44,7 @@ prompt()
 rl.on('line', (line) => {
   switch (line.toLowerCase().trim()) {
     case 'clear':
-      history = []
+      history = config.systemPrompt
       console.log('Chat history is now cleared!')
       prompt()
       return
@@ -57,10 +61,10 @@ rl.on('line', (line) => {
           spinner.stop()
           res.data.choices.forEach(choice => {
             history.push(choice.message)
-            console.log(choice.message.content)
+            console.log(cliMd(choice.message.content).trim())
           })
         })
-        .catch(err => spinner.fail(err))
+        .catch(err => spinner.fail(err.message))
         .finally(prompt)
   }
 })

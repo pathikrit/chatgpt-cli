@@ -1,9 +1,14 @@
 {
   "name": "chatgpt-cli",
   "version": "0.0.1",
-  "main": "app.js",
+  "exports": "./app.js",
   "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=14.16"
+  },
   "dependencies": {
+    "cli-markdown": "^3.0.3",
     "dotenv": "^16.0.3",
     "openai": "^3.2.1",
     "ora": "5.4.1"
