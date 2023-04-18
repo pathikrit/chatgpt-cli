@@ -8,6 +8,7 @@
   "license": "ISC",
   "dependencies": {
     "dotenv": "^16.0.3",
-    "openai": "^3.2.1"
+    "openai": "^3.2.1",
+    "ora": "5.4.1"
   }
 }

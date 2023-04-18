@@ -1,6 +1,7 @@
 require('dotenv').config()
 const { Configuration, OpenAIApi } = require('openai')
 const readline = require('readline')
+const ora = require('ora')
 
 const config = {
   intro: [
@@ -18,6 +19,7 @@ const openai = new OpenAIApi(new Configuration({apiKey: process.env.OPENAI_API_K
 let history = []
 
 const rl = readline.createInterface({input: process.stdin, output: process.stdout, terminal: false})
+
 rl.setPrompt('> ')
 const prompt = () => {
   rl.resume()
@@ -42,14 +44,16 @@ rl.on('line', (line) => {
     default:
       rl.pause()
       history.push({role: 'user', content: line})
+      const spinner = ora().start('Fetching')
       openai.createChatCompletion(Object.assign(config.chatApiParams, {messages: history}))
         .then(res => {
+          spinner.stop()
           res.data.choices.forEach(choice => {
             history.push(choice.message)
             console.log(choice.message.content)
           })
         })
-        .catch(err => console.error(err))
+        .catch(err => spinner.fail(err))
         .finally(prompt)
   }
 })
