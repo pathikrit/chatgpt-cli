@@ -19,7 +19,7 @@ const config = {
     max_tokens: 2048,
   },
   systemPrompts: [
-    'Always use code blocks with the appropriate language tags.',
+    'Always use code blocks with the appropriate language tags',
     'If the question needs real-time information that you may not have access to, simply reply with "I do not have real-time information"'
   ],
   needWebBrowsing: [
@@ -61,9 +61,6 @@ const googleSearch = (query) => google
   .then(response => response.data.items.filter(result => result.snippet).map(result => result.snippet))
   .then(results => results.length ? Promise.resolve(results.join('\n')) : Promise.reject('No search result found'))
 
-
-const chat = (messages) => openai.createChatCompletion(Object.assign(config.chatApiParams, {messages: messages}))
-
 const needWebBrowsing = (response) => config.needWebBrowsing.some(frag => response.toLowerCase().includes(frag))
 
 config.intro.forEach(line => console.log(line))
@@ -82,30 +79,32 @@ rl.on('line', (line) => {
       return prompt()
 
     default:
-      const output = (message) => {
-        history.push(message)
-        const output = message.content.includes('```') ? cliMd(message.content).trim() : message.content
-        return Promise.resolve(console.log(output))
+      rl.pause()
+
+      const chat = (params) => {
+        const spinner = ora().start(params.spinnerMessage)
+        history.push({role: 'user', content: params.message})
+        return openai.createChatCompletion(Object.assign(config.chatApiParams, {messages: history}))
+          .then(res => {
+            spinner.stop()
+            const message = res.data.choices[0].message
+            const output = message.content.includes('```') ? cliMd(message.content).trim() : message.content
+            return Promise.resolve(console.log(output))
+          })
+          .catch(err => spinner.fail(err.stack))
+          .finally(prompt)
       }
 
-      rl.pause()
-      history.push({role: 'user', content: line})
+      chat({
+        message: line,
+        spinnerMessage: `Asking ${config.chatApiParams.model}`
+      })
 
-      const spinner = ora().start(`Asking ${config.chatApiParams.model}`)
-      chat(history)
-        .then(async res => {
-          spinner.stop()
-          if (needWebBrowsing(res.data.choices[0].message.content)) {
-            return googleSearch(line)
-              //.then(text => chat(`I found the following web search results for "${line}":\n\n${text}\n\nUsing the above search results, can you now take a best guess at answering ${line}`))
-              .then(text => Promise.resolve(console.log(text)))
-          } else {
-            return output(res.data.choices[0].message)
-          }
-        })
-        //.catch(err => spinner.fail(err.stack))
-        .catch(err => console.error(err.stack))
-        .finally(prompt)
+          // if (needWebBrowsing(res.data.choices[0].message.content)) {
+          //   return googleSearch(line)
+          //     //.then(text => chat(`I found the following web search results for "${line}":\n\n${text}\n\nUsing the above search results, can you now take a best guess at answering ${line}`))
+          //     .then(text => Promise.resolve(console.log(text)))
+
   }
 })
 
