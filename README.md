@@ -48,20 +48,21 @@ Bye!
 ```
 
 ## Web Browsing
-To enable browsing, you need to export Google API keys:
+To enable browsing, you need to setup Google API keys:
 ```shell
 export GOOGLE_CUSTOM_SEARCH_ENGINE_ID=XXXXX # Get from https://www.google.com/cse/create/new
 export GOOGLE_CUSTOM_SEARCH_API_KEY=XXXXX # Get from https://developers.google.com/custom-search/v1/introduction
 ```
 Before:
 ```
-> What is price of AAPL?
-I do not have real-time information. Please provide more context or specify a date and time for which you'd like the price of AAPL.
+> Whats the weather like in nyc today?
+⚠ I do not have real-time information. Please check a weather website or app for the current weather in NYC.
 ```
 
 After:
 ```shell
-> What is stock price of AAPL?
-⠇ Browsing the internet since the answer might have changed since the cutoff date of gpt-3.5-turbo
-The most recent closing stock price of AAPL was $165.23, with a 52-week high of $176.15 and an average price target of $170.18 according to 31 Wall Street analysts.
+> Whats the weather like in nyc today?
+⚠ I do not have real-time information. Please check a weather website or app for the current weather in NYC.
+⠸ Searching the web ...
+✔ Today in New York City, the temperature will be mostly cloudy with a high of 58°F (14°C) and a low of 46°F (8°C). There will be partly cloudy skies in the morning, which will become cloudy during the afternoon. There is a chance of light winds from the west, southwest.
 ```

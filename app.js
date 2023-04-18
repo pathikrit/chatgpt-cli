@@ -72,9 +72,9 @@ const prompts = {
   info: {
     onExit: chalk.italic('Bye!'),
     onClear: chalk.italic('Chat history cleared!'),
-    onSearch: chalk.italic(`Browsing the internet ...`),
+    onSearch: chalk.italic(`Searching the web`),
     searchInfo: chalk.italic('(inferred from Google search)'),
-    onQuery: chalk.italic(`Asking ${config.chatApiParams.model} ...`),
+    onQuery: chalk.italic(`Asking ${config.chatApiParams.model}`),
     onCopy: (text) => chalk.italic(`Copied last message to clipboard (${text.length} characters)`)
   }
 }
@@ -149,8 +149,7 @@ rl.on('line', (line) => {
 /* TODO
 - multiline input
 - PDF
+
 - Explicit internet browsing
 - Gif of terminal
-- spinner.promisify
-- Streaming
 */
