@@ -18,9 +18,16 @@ const config = {
 const openai = new OpenAIApi(new Configuration({apiKey: process.env.OPENAI_API_KEY}))
 let history = []
 
-const rl = readline.createInterface({input: process.stdin, output: process.stdout, terminal: false})
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+  completer: (line) => {
+    const completions = ['clear', 'exit']
+    const hits = completions.filter(c => c.startsWith(line.toLowerCase()))
+    return [hits.length ? hits : completions, line]
+  }
+})
 
-rl.setPrompt('> ')
 const prompt = () => {
   rl.resume()
   console.log('────────────────────────────────────────────────────────────────────────────────────')
