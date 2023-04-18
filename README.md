@@ -16,9 +16,10 @@ yarn && node app.js
 ## Sample interaction
 ```
 Available commands:
- * clear / clr     : Copy last message to clipboard
- * copy / cp       : Clear chat history
+ * clear / clr     : Clear chat history
+ * copy / cp       : Copy last message to clipboard
  * exit / quit / q : Exit the program
+For multiline chats, press PageDown
 ────────────────────────────────────────────────────────────────────────────────────
 > Hi! My name is Rick!
 Hi Rick! How can I assist you today?
@@ -48,18 +49,17 @@ Bye!
 ```
 
 ## Web Browsing
+```
+> Whats the weather like in nyc today?
+⚠ I do not have real-time information. Please check a weather website or app for the current weather in NYC.
+```
 To enable browsing, you need to setup Google API keys:
 ```shell
 export GOOGLE_CUSTOM_SEARCH_ENGINE_ID=XXXXX # Get from https://www.google.com/cse/create/new
 export GOOGLE_CUSTOM_SEARCH_API_KEY=XXXXX # Get from https://developers.google.com/custom-search/v1/introduction
 ```
-Before:
-```
-> Whats the weather like in nyc today?
-⚠ I do not have real-time information. Please check a weather website or app for the current weather in NYC.
-```
 
-After:
+Now you will get:
 ```shell
 > Whats the weather like in nyc today?
 ⚠ I do not have real-time information. Please check a weather website or app for the current weather in NYC.

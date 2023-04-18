@@ -28,9 +28,10 @@ if (!config.openAiApiKey) {
 const prompts = {
   intro: [
     'Available commands:',
-    ' * clear / clr     : Copy last message to clipboard',
-    ' * copy / cp       : Clear chat history',
-    ' * exit / quit / q : Exit the program'
+    ' * clear / clr     : Clear chat history',
+    ' * copy / cp       : Copy last message to clipboard',
+    ' * exit / quit / q : Exit the program',
+    'For multiline chats, press PageDown'
   ],
   next: () => {
     rl.resume()
@@ -85,6 +86,14 @@ const openai = new OpenAIApi(new Configuration({apiKey: config.openAiApiKey}))
 let history = newHistory()
 
 const rl = readline.createInterface({input: process.stdin, output: process.stdout, completer: prompts.completer})
+// HACKHACK: See https://stackoverflow.com/questions/66604677/how-to-detect-shift-enter-in-nodejs-terminal
+const newLinePlaceholder = '\u2008'
+process.stdin.on("keypress", (letter, key)=> {
+  if (key?.name === "pagedown") {
+    rl.write(newLinePlaceholder)
+    process.stdout.write('\n')
+  }
+})
 
 const googleSearch = (query) => config.googleSearchAuth.auth && config.googleSearchAuth.cx ?
   google.customsearch('v1').cse
@@ -129,7 +138,7 @@ rl.on('line', (line) => {
             history.push(message)
             const content = message.content
             const needWebBrowsing = !params.nested && prompts.needWebBrowsing.some(frag => content.toLowerCase().includes(frag))
-            const output = content.includes('```') ? cliMd(content).trim() : chalk.bold(content)
+            const output = content.includes('```') ? cliMd(content).trim() : chalk.bold(content) //TODO: better logic of whether output is in markdown
             if (needWebBrowsing) {
               spinner.warn(chalk.dim(output))
               const webSpinner = ora().start(prompts.info.onSearch)
@@ -140,16 +149,15 @@ rl.on('line', (line) => {
             return Promise.resolve(spinner.succeed(output))
           })
           .catch(err => handleError(spinner, err))
-          .finally(() => { if (!params.nested) prompts.next() })
       }
-      return chat({message: line})
+      return chat({message: line.replace(newLinePlaceholder, '\n')}).finally(prompts.next)
   }
 })
 
 /* TODO
-- multiline input
 - PDF
 
+- Image rendering
 - Explicit internet browsing
 - Gif of terminal
 */
