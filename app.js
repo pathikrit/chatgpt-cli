@@ -80,17 +80,20 @@ rl.on('line', (line) => {
     default:
       rl.pause()
 
+      const spinner = ora().start(`Asking ${config.chatApiParams.model}`)
+
       const chat = (params) => {
-        const spinner = ora().start(params.spinnerMessage)
         history.push({role: 'user', content: params.message})
         return openai.createChatCompletion(Object.assign(config.chatApiParams, {messages: history}))
           .then(res => {
-            spinner.stop()
             const message = res.data.choices[0].message
             history.push(message)
             const content = message.content
             const needWebBrowsing = !params.nested && config.needWebBrowsing.some(frag => content.toLowerCase().includes(frag))
+            const output = content.includes('```') ? cliMd(content).trim() : content
             if (needWebBrowsing) {
+              spinner.warn(output)
+              const webSpinner = ora().start(`Browsing the internet ...`)
               return googleSearch(params.message).then(text => chat({
                   message: `Okay, I found the following up-to-date web search results for "${line}":
                   
@@ -98,20 +101,23 @@ rl.on('line', (line) => {
                       
                     Using the above search results, can you now take a best guess at answering ${line}. 
                     Exclude the disclaimer note about this information might be inaccurate or subject to change. 
-                    Be short and don't say "based on the search results
+                    Be short and don't say "based on the search results".
                   `,
-                  spinnerMessage: `Browsing the internet since the answer might have changed since the cutoff date of ${config.chatApiParams.model}`,
                   nested: true
                 }))
+                .then(res => {webSpinner.stop(); return res})
             } else {
-              return Promise.resolve(console.log(content.includes('```') ? cliMd(content).trim() : content))
+              return Promise.resolve(spinner.succeed(output))
             }
           })
-          .catch(err => spinner.fail(err.stack))
+          .catch(err => {
+            spinner.fail(err.stack)
+            console.error(err.message, history)
+          })
           .finally(() => { if (!params.nested) prompt() })
       }
 
-      chat({message: line, spinnerMessage: `Asking ${config.chatApiParams.model}`})
+      chat({message: line})
   }
 })
 
@@ -119,4 +125,5 @@ rl.on('line', (line) => {
 1. Streaming
 2. PDF
 3. copy last response to clipboard
+4. change intermediate to gray
  */
