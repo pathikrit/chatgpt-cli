@@ -16,11 +16,15 @@ yarn && node app.js
 ## Sample interaction
 ```
 Available commands:
- * clear / clr: Clear chat history
- * exit / quit / q: Exit the program
+ * clear / clr     : Copy last message to clipboard
+ * copy / cp       : Clear chat history
+ * exit / quit / q : Exit the program
 ────────────────────────────────────────────────────────────────────────────────────
 > Hi! My name is Rick!
 Hi Rick! How can I assist you today?
+────────────────────────────────────────────────────────────────────────────────────
+> copy
+Copied last message to clipboard (34 characters)
 ────────────────────────────────────────────────────────────────────────────────────
 > What is my name?
 Your name is Rick, as you mentioned earlier. How can I assist you today, Rick?

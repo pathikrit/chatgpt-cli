@@ -3,12 +3,11 @@ import { Configuration, OpenAIApi } from 'openai'
 import readline from 'readline'
 import ora from 'ora'
 import chalk from 'chalk'
+import clipboard from 'clipboardy'
 import cliMd from 'cli-markdown'
-import {google as googleapis} from 'googleapis'
-const google = googleapis.customsearch('v1').cse
+import {google} from 'googleapis'
 
 dotenv.config()
-
 const config = {
   chatApiParams: {
     model: 'gpt-3.5-turbo',
@@ -29,8 +28,9 @@ if (!config.openAiApiKey) {
 const prompts = {
   intro: [
     'Available commands:',
-    ' * clear / clr: Clear chat history',
-    ' * exit / quit / q: Exit the program'
+    ' * clear / clr     : Copy last message to clipboard',
+    ' * copy / cp       : Clear chat history',
+    ' * exit / quit / q : Exit the program'
   ],
   next: () => {
     rl.resume()
@@ -66,14 +66,16 @@ const prompts = {
   errors: {
     missingOpenAiApiKey: chalk.redBright('OPENAI_API_KEY must be set (see https://platform.openai.com/account/api-keys).'),
     missingGoogleKey: 'Cannot search the web since GOOGLE_CUSTOM_SEARCH_CONFIGs are not set',
-    noResults: 'No search result found'
+    noResults: 'No search result found',
+    nothingToCopy: 'History is empty; nothing to copy'
   },
   info: {
     onExit: chalk.italic('Bye!'),
     onClear: chalk.italic('Chat history cleared!'),
-    onSearch: `Browsing the internet ...`,
+    onSearch: chalk.italic(`Browsing the internet ...`),
     searchInfo: chalk.italic('(inferred from Google search)'),
-    onQuery: `Asking ${config.chatApiParams.model} ...`
+    onQuery: chalk.italic(`Asking ${config.chatApiParams.model} ...`),
+    onCopy: (text) => chalk.italic(`Copied last message to clipboard (${text.length} characters)`)
   }
 }
 
@@ -85,7 +87,7 @@ let history = newHistory()
 const rl = readline.createInterface({input: process.stdin, output: process.stdout, completer: prompts.completer})
 
 const googleSearch = (query) => config.googleSearchAuth.auth && config.googleSearchAuth.cx ?
-  google
+  google.customsearch('v1').cse
     .list(Object.assign(config.googleSearchAuth, {q: query}))
     .then(response => response.data.items.filter(result => result.snippet).map(result => result.snippet))
     .then(results => results.length ? Promise.resolve(results.join('\n')) : Promise.reject(prompts.errors.noResults))
@@ -106,12 +108,20 @@ rl.on('line', (line) => {
       console.log(prompts.info.onClear)
       return prompts.next()
 
+    case 'cp': case 'copy':
+      const content = history.findLast(item => item.role === 'assistant')?.content
+      if (content) {
+        clipboard.writeSync(content)
+        console.log(prompts.info.onCopy(content))
+      } else console.warn(prompts.errors.nothingToCopy)
+      return prompts.next()
+
     default:
       rl.pause()
       const handleError = (spinner, err) => spinner.fail(err.stack ?? err.message ?? err)
-      const spinner = ora().start(prompts.info.onQuery)
-
       const chat = (params) => {
+        const spinner = params.spinner ?? ora().start()
+        spinner.text = prompts.info.onQuery
         history.push({role: 'user', content: params.message})
         return openai.createChatCompletion(Object.assign(config.chatApiParams, {messages: history}))
           .then(res => {
@@ -124,8 +134,7 @@ rl.on('line', (line) => {
               spinner.warn(chalk.dim(output))
               const webSpinner = ora().start(prompts.info.onSearch)
               return googleSearch(params.message)
-                .then(text => chat({message: prompts.webSearch(line, text), nested: true}))
-                .then(res => {webSpinner.stop(); console.log(prompts.info.searchInfo); return res})
+                .then(text => chat({message: prompts.webSearch(line, text), nested: true, spinner: webSpinner}))
                 .catch(err => handleError(webSpinner, err))
             }
             return Promise.resolve(spinner.succeed(output))
@@ -139,10 +148,9 @@ rl.on('line', (line) => {
 
 /* TODO
 - multiline input
-- Streaming
 - PDF
-- copy last response to clipboard
 - Explicit internet browsing
 - Gif of terminal
 - spinner.promisify
+- Streaming
 */
