@@ -2,6 +2,7 @@ import dotenv from 'dotenv'
 import { Configuration, OpenAIApi } from 'openai'
 import readline from 'readline'
 import ora from 'ora'
+import chalk from 'chalk'
 import cliMd from 'cli-markdown'
 import {google as googleapis} from 'googleapis'
 const google = googleapis.customsearch('v1').cse
@@ -69,18 +70,18 @@ rl.on('line', (line) => {
   switch (line.toLowerCase().trim()) {
     case '': return prompt()
     case 'q': case 'quit': case 'exit':
-      console.log('Bye!')
+      console.log(chalk.italic('Bye!'))
       process.exit()
 
     case 'clr': case 'clear':
       history = newHistory()
-      console.log('Chat history cleared!')
+      console.log(chalk.italic('Chat history cleared!'))
       return prompt()
 
     default:
       rl.pause()
 
-      const spinner = ora().start(`Asking ${config.chatApiParams.model}`)
+      const spinner = ora().start(`Asking ${config.chatApiParams.model} ...`)
 
       const chat = (params) => {
         history.push({role: 'user', content: params.message})
@@ -90,9 +91,9 @@ rl.on('line', (line) => {
             history.push(message)
             const content = message.content
             const needWebBrowsing = !params.nested && config.needWebBrowsing.some(frag => content.toLowerCase().includes(frag))
-            const output = content.includes('```') ? cliMd(content).trim() : content
+            const output = content.includes('```') ? cliMd(content).trim() : chalk.bold(content)
             if (needWebBrowsing) {
-              spinner.warn(output)
+              spinner.warn(chalk.dim(output))
               const webSpinner = ora().start(`Browsing the internet ...`)
               return googleSearch(params.message).then(text => chat({
                   message: `Okay, I found the following up-to-date web search results for "${line}":
@@ -125,5 +126,5 @@ rl.on('line', (line) => {
 1. Streaming
 2. PDF
 3. copy last response to clipboard
-4. change intermediate to gray
+4. Explicit internet browsing
  */
