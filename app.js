@@ -61,7 +61,8 @@ rl.on('line', (line) => {
           spinner.stop()
           res.data.choices.forEach(choice => {
             history.push(choice.message)
-            console.log(cliMd(choice.message.content).trim())
+            const output = choice.message.content.includes('```') ? cliMd(choice.message.content).trim() : choice.message.content
+            console.log(output)
           })
         })
         .catch(err => spinner.fail(err.message))
