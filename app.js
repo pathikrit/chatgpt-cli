@@ -17,7 +17,13 @@ const config = {
   googleSearchAuth: {
     auth: process.env.GOOGLE_CUSTOM_SEARCH_API_KEY,
     cx: process.env.GOOGLE_CUSTOM_SEARCH_ENGINE_ID,
-  }
+  },
+  openAiApiKey: process.env.OPENAI_API_KEY
+}
+
+if (!config.openAiApiKey) {
+  console.error(prompts.errors.missingOpenAiApiKey)
+  process.exit(-1)
 }
 
 const prompts = {
@@ -56,20 +62,33 @@ const prompts = {
       
     Using the above search results, can you now take a best guess at answering ${query}. 
     Exclude the disclaimer note about this information might be inaccurate or subject to change. 
-    Be short and don't say "based on the search results".`
+    Be short and don't say "based on the search results".`,
+  errors: {
+    missingOpenAiApiKey: chalk.redBright('OPENAI_API_KEY must be set (see https://platform.openai.com/account/api-keys).'),
+    missingGoogleKey: 'Cannot search the web since GOOGLE_CUSTOM_SEARCH_CONFIGs are not set',
+    noResults: 'No search result found'
+  },
+  info: {
+    onExit: chalk.italic('Bye!'),
+    onClear: chalk.italic('Chat history cleared!'),
+    onSearch: `Browsing the internet ...`,
+    onQuery: `Asking ${config.chatApiParams.model} ...`
+  }
 }
 
 const newHistory = () => prompts.system.map(prompt => {return {role: 'system', content: prompt}})
 
-const openai = new OpenAIApi(new Configuration({apiKey: process.env.OPENAI_API_KEY}))
+const openai = new OpenAIApi(new Configuration({apiKey: config.openAiApiKey}))
 let history = newHistory()
 
 const rl = readline.createInterface({input: process.stdin, output: process.stdout, completer: prompts.completer})
 
-const googleSearch = (query) => google
-  .list(Object.assign(config.googleSearchAuth, {q: query}))
-  .then(response => response.data.items.filter(result => result.snippet).map(result => result.snippet))
-  .then(results => results.length ? Promise.resolve(results.join('\n')) : Promise.reject('No search result found'))
+const googleSearch = (query) => config.googleSearchAuth.auth && config.googleSearchAuth.cx ?
+  google
+    .list(Object.assign(config.googleSearchAuth, {q: query}))
+    .then(response => response.data.items.filter(result => result.snippet).map(result => result.snippet))
+    .then(results => results.length ? Promise.resolve(results.join('\n')) : Promise.reject(prompts.errors.noResults))
+  : Promise.reject(prompts.errors.missingGoogleKey)
 
 prompts.intro.forEach(line => console.log(line))
 prompts.next()
@@ -78,17 +97,17 @@ rl.on('line', (line) => {
   switch (line.toLowerCase().trim()) {
     case '': return prompts.next()
     case 'q': case 'quit': case 'exit':
-      console.log(chalk.italic('Bye!'))
+      console.log(prompts.info.onExit)
       process.exit()
 
     case 'clr': case 'clear':
       history = newHistory()
-      console.log(chalk.italic('Chat history cleared!'))
+      console.log(prompts.info.onClear)
       return prompts.next()
 
     default:
       rl.pause()
-      const spinner = ora().start(`Asking ${config.chatApiParams.model} ...`)
+      const spinner = ora().start(prompts.info.onQuery)
       const chat = (params) => {
         history.push({role: 'user', content: params.message})
         return openai.createChatCompletion(Object.assign(config.chatApiParams, {messages: history}))
@@ -100,18 +119,15 @@ rl.on('line', (line) => {
             const output = content.includes('```') ? cliMd(content).trim() : chalk.bold(content)
             if (needWebBrowsing) {
               spinner.warn(chalk.dim(output))
-              const webSpinner = ora().start(`Browsing the internet ...`)
+              const webSpinner = ora().start(prompts.info.onSearch)
               return googleSearch(params.message)
                 .then(text => chat({message: prompts.webSearch(line, text), nested: true}))
                 .then(res => {webSpinner.stop(); return res})
-            } else {
-              return Promise.resolve(spinner.succeed(output))
+                .catch(err => webSpinner.fail(err.stack ?? err.message ?? err))
             }
+            return Promise.resolve(spinner.succeed(output))
           })
-          .catch(err => {
-            spinner.fail(err.stack)
-            console.error(err.message, history)
-          })
+          .catch(err => spinner.fail(err.stack ?? err.message ?? err))
           .finally(() => { if (!params.nested) prompts.next() })
       }
       chat({message: line})
@@ -119,7 +135,6 @@ rl.on('line', (line) => {
 })
 
 /* TODO
-- Check missing key
 - multiline input
 - Streaming
 - PDF
