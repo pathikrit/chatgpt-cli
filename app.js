@@ -19,14 +19,15 @@ const config = {
     max_tokens: 2048,
   },
   systemPrompts: [
-    {
-      role: 'system',
-      content: 'Always use code blocks with the appropriate language tags.'
-    },
-    {
-      role: 'system',
-      content: 'If the question needs real-time information that you may not have access to, simply reply with "Check Internet"'
-    }
+    'Always use code blocks with the appropriate language tags.',
+    'If the question needs real-time information that you may not have access to, simply reply with "I do not have real-time information"'
+  ],
+  needWebBrowsing: [
+    'not have access to real-time',
+    "don't access to real-time",
+    'not able to provide real-time',
+    'not have real-time',
+    'as of my training data',
   ],
   googleSearchAuth: {
     auth: process.env.GOOGLE_CUSTOM_SEARCH_API_KEY,
@@ -34,8 +35,10 @@ const config = {
   }
 }
 
+const newHistory = () => config.systemPrompts.map(prompt => {return {role: 'system', content: prompt}})
+
 const openai = new OpenAIApi(new Configuration({apiKey: process.env.OPENAI_API_KEY}))
-let history = Array.from(config.systemPrompts)
+let history = newHistory()
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -56,11 +59,12 @@ const prompt = () => {
 const googleSearch = (query) => google
   .list(Object.assign(config.googleSearchAuth, {q: query}))
   .then(response => response.data.items.filter(result => result.snippet).map(result => result.snippet))
+  .then(results => results.length ? Promise.resolve(results.join('\n')) : Promise.reject('No search result found'))
 
-const needWebBrowsing = (response) => {
-  const res = response.toLowerCase()
-  return res === 'Check Internet' || res.includes('do not have real-time information') || res.includes('as of my training data')
-}
+
+const chat = (messages) => openai.createChatCompletion(Object.assign(config.chatApiParams, {messages: messages}))
+
+const needWebBrowsing = (response) => config.needWebBrowsing.some(frag => response.toLowerCase().includes(frag))
 
 config.intro.forEach(line => console.log(line))
 prompt()
@@ -73,24 +77,34 @@ rl.on('line', (line) => {
       process.exit()
 
     case 'clr': case 'clear':
-      history = Array.from(config.systemPrompts)
+      history = newHistory()
       console.log('Chat history cleared!')
       return prompt()
 
     default:
+      const output = (message) => {
+        history.push(message)
+        const output = message.content.includes('```') ? cliMd(message.content).trim() : message.content
+        return Promise.resolve(console.log(output))
+      }
+
       rl.pause()
       history.push({role: 'user', content: line})
+
       const spinner = ora().start(`Asking ${config.chatApiParams.model}`)
-      openai.createChatCompletion(Object.assign(config.chatApiParams, {messages: history}))
-        .then(res => {
+      chat(history)
+        .then(async res => {
           spinner.stop()
-          res.data.choices.forEach(choice => {
-            history.push(choice.message)
-            const output = choice.message.content.includes('```') ? cliMd(choice.message.content).trim() : choice.message.content
-            console.log(output)
-          })
+          if (needWebBrowsing(res.data.choices[0].message.content)) {
+            return googleSearch(line)
+              //.then(text => chat(`I found the following web search results for "${line}":\n\n${text}\n\nUsing the above search results, can you now take a best guess at answering ${line}`))
+              .then(text => Promise.resolve(console.log(text)))
+          } else {
+            return output(res.data.choices[0].message)
+          }
         })
-        .catch(err => spinner.fail(err.message))
+        //.catch(err => spinner.fail(err.stack))
+        .catch(err => console.error(err.stack))
         .finally(prompt)
   }
 })
