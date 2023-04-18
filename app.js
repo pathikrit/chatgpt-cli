@@ -29,8 +29,8 @@ const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
   completer: (line) => {
-    const completions = ['clear', 'exit']
-    const hits = completions.filter(c => c.startsWith(line.toLowerCase()))
+    const completions = ['clear', 'exit', 'quit']
+    const hits = completions.filter(c => c.startsWith(line.toLowerCase().trim()))
     return [hits.length ? hits : completions, line]
   }
 })
@@ -46,19 +46,20 @@ prompt()
 
 rl.on('line', (line) => {
   switch (line.toLowerCase().trim()) {
-    case '': return
+    case '': return prompt()
+    case 'q':
+    case 'quit':
     case 'exit': process.exit()
 
     case 'clear':
       history = Array.from(config.systemPrompt)
       console.log('Chat history is now cleared!')
-      prompt()
-      return
+      return prompt()
 
     default:
       rl.pause()
       history.push({role: 'user', content: line})
-      const spinner = ora().start('Fetching')
+      const spinner = ora().start(`Asking ${config.chatApiParams.model}`)
       openai.createChatCompletion(Object.assign(config.chatApiParams, {messages: history}))
         .then(res => {
           spinner.stop()
