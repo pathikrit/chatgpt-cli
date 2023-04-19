@@ -211,24 +211,18 @@ rl.on('line', (line) => {
 
     default:
       rl.pause()
-      const handleError = (spinner, err) => spinner.fail(err.stack ?? err.message ?? err)
+      let spinner = ora().start()
+
       const chat = (params) => {
-        const spinner = params.spinner ?? ora().start()
         const promptEngineer = () => {
           if (params.message.includes(prompts.webBrowsing.forcePhrase)) {
             spinner.text = prompts.info.onSearch
             params.message = params.message.replace(prompts.webBrowsing.forcePhrase, ' ').trim()
-            return googleSearch(params.message)
-              .then(result => prompts.webBrowsing.preFacto(params.message, result))
-              .catch(err => {
-                handleError(spinner, err)
-                return Promise.resolve(params.message)
-              })
+            return googleSearch(params.message).then(result => prompts.webBrowsing.preFacto(params.message, result))
           } else {
             return Promise.resolve(params.message)
           }
         }
-
         const makeRequest = (prompt) => {
           spinner.text = prompts.info.onQuery
           history.add({role: Role.User, content: prompt})
@@ -241,17 +235,14 @@ rl.on('line', (line) => {
               const output = content.includes('```') ? cliMd(content).trim() : chalk.bold(content) //TODO: better logic of whether output is in markdown
               if (needWebBrowsing) {
                 spinner.warn(chalk.dim(output))
-                const webSpinner = ora().start(prompts.info.onSearch)
-                return googleSearch(params.message)
-                  .then(text => chat({message: prompts.webBrowsing.postFacto(line, text), nested: true, spinner: webSpinner}))
-                  .catch(err => handleError(webSpinner, err))
+                spinner = ora().start(prompts.info.onSearch)
+                return googleSearch(params.message).then(text => chat({message: prompts.webBrowsing.postFacto(line, text), nested: true}))
               }
               return Promise.resolve(spinner.succeed(output))
             })
-            .catch(err => handleError(spinner, err))
+            .catch(err => spinner.fail(err.stack ?? err.message ?? err))
         }
-
-        return promptEngineer().then(makeRequest)
+        return promptEngineer().catch(_ => Promise.resolve(params.message)).then(makeRequest)
       }
       return chat({message: line.replace(newLinePlaceholder, '\n').trim()}).finally(prompts.next)
   }
