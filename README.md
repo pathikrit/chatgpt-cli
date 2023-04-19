@@ -15,16 +15,18 @@ yarn && node app.js
 
 ## Sample interaction
 ```
-Available commands:
-    * clear / clr     : Clear chat history
-    * copy / cp       : Copy last message to clipboard
-    * history / h     : Show current history
-    * help / ?        : Show this message
-    * exit / quit / q : Exit the program
-    
-    - For multiline chats press PageDown
-    - Use Up/Down array keys to travel through history
-    - Include [web] anywhere in your prompt to force web browsing
+System commands:
+  * clear / clr     : Clear chat history
+  * copy / cp       : Copy last message to clipboard
+  * history / h     : Show current history
+  * help / ?        : Show this message
+  * exit / quit / q : Exit the program
+
+Usage Tips:
+  - For multiline chats press PageDown
+  - Use Up/Down array keys to scrub through previous messages
+  - Include [web] anywhere in your prompt to force web browsing
+
 ────────────────────────────────────────────────────────────────────────────────────
 > Hi! My name is Rick!
 Hi Rick! How can I assist you today?
