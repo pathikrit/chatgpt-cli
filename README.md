@@ -69,3 +69,5 @@ Now you will get:
 ⠸ Searching the web ...
 ✔ Today in New York City, the temperature will be mostly cloudy with a high of 58°F (14°C) and a low of 46°F (8°C). There will be partly cloudy skies in the morning, which will become cloudy during the afternoon. There is a chance of light winds from the west, southwest.
 ```
+
+You can also force web browsing by including `[web]` anywhere in your prompt.

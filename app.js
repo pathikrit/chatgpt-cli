@@ -51,6 +51,14 @@ const prompts = {
       "as of my programmed cut-off date"
     ],
     forcePhrase: '[web]',
+    preFacto: (query, result) => `
+    Can you answer "${query}"?
+    I also found the following web search results for the same query:
+    
+      ${result}
+      
+    If needed, feel free to augment your response with anything helpful from the above search results too.
+    `,
     postFacto: (query, result) => `
     I found the following up-to-date web search results for "${query}":
     
@@ -59,7 +67,7 @@ const prompts = {
     Using the above search results, can you now take a best guess at answering ${query}. 
     Exclude the disclaimer note about this information might be inaccurate or subject to change.
     Be short and don't say "based on the search results". 
-    Btw, the date and time right now is ${new Date().toUTCString()}. Feel free to mention that in your response if needed.
+    Btw, the date and time right now is ${new Date().toLocaleString()}. Feel free to mention that in your response if needed.
     `
   },
   chatWithDoc: (text) => `
@@ -116,7 +124,6 @@ class History {
       if (idx < 0) break
       this.history.splice(idx, 1)
     }
-    return this
   }
 
   totalTokens = () => this.history.map(msg => msg.numTokens).reduce((a, b) => a + b, 0)
@@ -207,31 +214,44 @@ rl.on('line', (line) => {
       const handleError = (spinner, err) => spinner.fail(err.stack ?? err.message ?? err)
       const chat = (params) => {
         const spinner = params.spinner ?? ora().start()
-        spinner.text = prompts.info.onQuery
+        const promptEngineer = () => {
+          if (params.message.includes(prompts.webBrowsing.forcePhrase)) {
+            spinner.text = prompts.info.onSearch
+            params.message = params.message.replace(prompts.webBrowsing.forcePhrase, ' ').trim()
+            return googleSearch(params.message)
+              .then(result => prompts.webBrowsing.preFacto(params.message, result))
+              .catch(err => {
+                handleError(spinner, err)
+                return Promise.resolve(params.message)
+              })
+          } else {
+            return Promise.resolve(params.message)
+          }
+        }
 
-        // if (params.message.contains(prompts.webBrowsing.forcePhrase)) {
-        //   spinner.text = prompts.info.onSearch
-        //   googleSearch(params.message.replace(prompts.webBrowsing.forcePhrase, ' '))
-        // }
+        const makeRequest = (prompt) => {
+          spinner.text = prompts.info.onQuery
+          history.add({role: Role.User, content: prompt})
+          return openai.createChatCompletion(Object.assign(config.chatApiParams, {messages: history.get()}))
+            .then(res => {
+              const message = res.data.choices[0].message
+              history.add(message)
+              const content = message.content
+              const needWebBrowsing = !params.nested && prompts.webBrowsing.needed.some(frag => content.toLowerCase().includes(frag))
+              const output = content.includes('```') ? cliMd(content).trim() : chalk.bold(content) //TODO: better logic of whether output is in markdown
+              if (needWebBrowsing) {
+                spinner.warn(chalk.dim(output))
+                const webSpinner = ora().start(prompts.info.onSearch)
+                return googleSearch(params.message)
+                  .then(text => chat({message: prompts.webBrowsing.postFacto(line, text), nested: true, spinner: webSpinner}))
+                  .catch(err => handleError(webSpinner, err))
+              }
+              return Promise.resolve(spinner.succeed(output))
+            })
+            .catch(err => handleError(spinner, err))
+        }
 
-        history.add({role: Role.User, content: params.message})
-        return openai.createChatCompletion(Object.assign(config.chatApiParams, {messages: history.get()}))
-          .then(res => {
-            const message = res.data.choices[0].message
-            history.add(message)
-            const content = message.content
-            const needWebBrowsing = !params.nested && prompts.webBrowsing.needed.some(frag => content.toLowerCase().includes(frag))
-            const output = content.includes('```') ? cliMd(content).trim() : chalk.bold(content) //TODO: better logic of whether output is in markdown
-            if (needWebBrowsing) {
-              spinner.warn(chalk.dim(output))
-              const webSpinner = ora().start(prompts.info.onSearch)
-              return googleSearch(params.message)
-                .then(text => chat({message: prompts.webBrowsing.postFacto(line, text), nested: true, spinner: webSpinner}))
-                .catch(err => handleError(webSpinner, err))
-            }
-            return Promise.resolve(spinner.succeed(output))
-          })
-          .catch(err => handleError(spinner, err))
+        return promptEngineer().then(makeRequest)
       }
       return chat({message: line.replace(newLinePlaceholder, '\n').trim()}).finally(prompts.next)
   }
@@ -241,6 +261,5 @@ rl.on('line', (line) => {
 - PDF
 - Image rendering
 - speak command
-- Force internet search
 - Gif of terminal
 */
