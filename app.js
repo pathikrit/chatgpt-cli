@@ -6,15 +6,16 @@ import ora from 'ora'
 import chalk from 'chalk'
 import cliMd from 'cli-markdown'
 import clipboard from 'clipboardy'
-import { Configuration as OpenAIConfig, OpenAIApi, ChatCompletionRequestMessageRoleEnum as Role } from 'openai'
+import {Configuration as OpenAIConfig, OpenAIApi, ChatCompletionRequestMessageRoleEnum as Role} from 'openai'
 import {google} from 'googleapis'
+import flexsearch from 'flexsearch'
 import {readPdfText} from 'pdf-text-reader'
 import {encode} from 'gpt-3-encoder'
 
 dotenv.config()
 const config = {
   chatApiParams: {
-    model: 'gpt-3.5-turbo',
+    model: 'gpt-3.5-turbo', //Note: When you change this, you may also need to change the gpt-3-encoder library
     max_tokens: 2048,
   },
   googleSearchAuth: {
@@ -127,8 +128,7 @@ const openai = new OpenAIApi(new OpenAIConfig({apiKey: config.openAiApiKey}))
 const history = new History()
 
 const rl = readline.createInterface({input: process.stdin, output: process.stdout, completer: prompts.completer})
-// TODO: Hack to get around https://stackoverflow.com/questions/66604677/
-// TODO: True multiline support e.g. pasting
+// TODO: True multiline support e.g. pasting (Blocked by https://stackoverflow.com/questions/66604677/)
 const newLinePlaceholder = '\u2008'
 process.stdin.on('keypress', (letter, key)=> {
   if (key?.name === 'pagedown') {
@@ -137,14 +137,24 @@ process.stdin.on('keypress', (letter, key)=> {
   }
 })
 
-const docToText = (file) => {
-  file = untildify(file)
-  if (fs.existsSync(file)) {
-    if (file.endsWith('.pdf')) return readPdfText(file).then(pages => pages.map(page => page.lines).join('\n\n'))
-    // TODO: support other file types like .txt and Word docs
-  }
-  return Promise.resolve()
-}
+// class DocChat {
+//   constructor(file) {
+//     file = untildify(file)
+//     // TODO: support other file types like .txt and Word docs
+//     if (file.endsWith('.pdf')) {
+//       const index = new flexsearch.Index()
+//       this.indexing = readPdfText(file)
+//         .then(pages => pages.forEach((page, i) => index.add(i, page.lines.join('\n'))))
+//         .then(_ => index)
+//     }
+//   }
+//
+//   query = (q, n = 3) => this.indexing.then(index => index.search(q, n))
+// }
+//
+// const docChat = new DocChat('~/Downloads/48laws.pdf')
+// docChat.query('Use Bait?')
+//   .then(res => console.log(res))
 
 const googleSearch = (query) => config.googleSearchAuth.auth && config.googleSearchAuth.cx ?
   google.customsearch('v1').cse

@@ -12,6 +12,7 @@
     "cli-markdown": "^3.0.3",
     "clipboardy": "^3.0.0",
     "dotenv": "^16.0.3",
+    "flexsearch": "^0.7.31",
     "googleapis": "^118.0.0",
     "gpt-3-encoder": "^1.1.4",
     "openai": "^3.2.1",
