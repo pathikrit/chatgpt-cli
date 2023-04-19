@@ -2,27 +2,27 @@
 import dotenv from 'dotenv'
 dotenv.config()
 
-// File system stuff
-import fs from 'fs'
+// I/O stuff
 import readline from 'readline'
 
-// Terminal UI stuff
+// Terminal font stuff
 import ora from 'ora'
 import chalk from 'chalk'
 
-// Chat presentation stuff
+// Terminal presentation stuff e.g. markdown, images, speech, clipboard etc
 import cliMd from 'cli-markdown'
+import say from 'say'
+import terminalImage from 'terminal-image'
 import clipboard from 'clipboardy'
 
+// Web
 import {google} from 'googleapis'
+import got from 'got'
 
 // Doc chat stuff
 import untildify from 'untildify'
 import flexsearch from 'flexsearch'
 import {readPdfText} from 'pdf-text-reader'
-
-// Text-To-Speech stuff
-import say from 'say'
 
 // GPT stuff
 import {Configuration as OpenAIConfig, OpenAIApi, ChatCompletionRequestMessageRoleEnum as Role} from 'openai'
@@ -116,12 +116,14 @@ Usage Tips:
   - For multiline chats press PageDown
   - Use Up/Down array keys to scrub through previous messages
   - Include [web] anywhere in your prompt to force web browsing
+  - Include [img] anywhere in your prompt to generate an image (works best in iTerm which can display images)
 `,
     onExit: chalk.italic('Bye!'),
     onClear: chalk.italic('Chat history cleared!'),
     onSearch: chalk.italic(`Searching the web`),
     searchInfo: chalk.italic('(inferred from Google search)'),
     onQuery: chalk.italic(`Asking ${config.chatApiParams.model}`),
+    onImage: chalk.italic(`Generating image`),
     docQuery: (file) => chalk.italic(`Asking ${config.chatApiParams.model} about ${file}`),
     onCopy: (text) => chalk.italic(`Copied last message to clipboard (${text.length} characters)`)
   }
@@ -206,6 +208,8 @@ prompts.next()
 
 rl.on('line', (line) => {
   say.stop()
+  line = line.replace(newLinePlaceholder, '\n').trim()
+
   switch (line.toLowerCase().trim()) {
     case '': return prompts.next()
 
@@ -245,7 +249,6 @@ rl.on('line', (line) => {
     default:
       rl.pause()
       let spinner = ora().start()
-
       const chat = (params) => {
         const promptEngineer = () => {
           if (params.message.includes(prompts.webBrowsing.forcePhrase)) {
@@ -273,16 +276,25 @@ rl.on('line', (line) => {
               }
               return Promise.resolve(spinner.succeed(output))
             })
-            .catch(err => spinner.fail(err.stack ?? err.message ?? err))
         }
         return promptEngineer().catch(_ => Promise.resolve(params.message)).then(makeRequest)
       }
-      return chat({message: line.replace(newLinePlaceholder, '\n').trim()}).finally(prompts.next)
+
+      const genImage = () => {
+        spinner.text = prompts.info.onImage
+        return openai.createImage({prompt: line})
+          .then(response => got(response.data.data[0].url).buffer())
+          .then(body => terminalImage.buffer(body))
+          .then(res => spinner.succeed('\n' + res))
+      }
+
+      const task = line.includes('[img]') ? genImage() : chat({message: line})
+
+      return task.catch(err => spinner.fail(err.stack ?? err.message ?? err)).finally(prompts.next)
   }
 })
 
 /* TODO
 - PDF
-- Image rendering
 - Gif of terminal
 */

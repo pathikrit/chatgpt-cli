@@ -1,6 +1,6 @@
 ChatGPT CLI
 ---
-This is a tiny ([<300 LoC](app.js)) program written in node.js to run ChatGPT in your terminal that supports [web-browsing](#web-browsing), text-to-speech
+This is a tiny ([<300 LoC](app.js)) program written in node.js to run ChatGPT in your terminal that supports [web-browsing](#web-browsing), text-to-speech, image-generation etc.
 
 1. Install `yarn` and `node` e.g. using `brew`:
 ```shell

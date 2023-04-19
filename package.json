@@ -14,11 +14,13 @@
     "dotenv": "^16.0.3",
     "flexsearch": "^0.7.31",
     "googleapis": "^118.0.0",
+    "got": "^12.6.0",
     "gpt-3-encoder": "^1.1.4",
     "openai": "^3.2.1",
     "ora": "^6.3.0",
     "pdf-text-reader": "^3.0.2",
     "say": "^0.16.0",
+    "terminal-image": "^2.0.0",
     "untildify": "^4.0.0"
   }
 }
