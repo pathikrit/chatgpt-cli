@@ -1,5 +1,6 @@
 // Config stuff
 import dotenv from 'dotenv'
+dotenv.config()
 
 // File system stuff
 import fs from 'fs'
@@ -20,20 +21,13 @@ import untildify from 'untildify'
 import flexsearch from 'flexsearch'
 import {readPdfText} from 'pdf-text-reader'
 
+// Text-To-Speech stuff
+import say from 'say'
+
 // GPT stuff
 import {Configuration as OpenAIConfig, OpenAIApi, ChatCompletionRequestMessageRoleEnum as Role} from 'openai'
 import {encode} from 'gpt-3-encoder'
 
-// Text-To-Speech stuff
-import {TextToSpeechClient} from '@google-cloud/text-to-speech'
-
-// const ttsClient = new TextToSpeechClient()
-// const speak = (text) => ttsClient.synthesizeSpeech({input: {text: text}})
-//     .then(([response]) => fs.writeFileSync('output.mp3', response.audioContent, 'binary'))
-// await speak('Hello world!')
-// process.exit()
-
-dotenv.config()
 const config = {
   chatApiParams: {
     model: 'gpt-3.5-turbo', //Note: When you change this, you may also need to change the gpt-3-encoder library
@@ -105,7 +99,8 @@ I would ask more questions about this later. Can you respond with a short 3 sent
     missingOpenAiApiKey: chalk.redBright('OPENAI_API_KEY must be set (see https://platform.openai.com/account/api-keys).'),
     missingGoogleKey: 'Cannot search the web since GOOGLE_CUSTOM_SEARCH_CONFIGs are not set',
     noResults: 'No search result found',
-    nothingToCopy: 'History is empty; nothing to copy'
+    nothingToCopy: 'History is empty; nothing to copy',
+    nothingToSay: 'No messages yet; nothing to say'
   },
   info: {
     help:
@@ -113,6 +108,7 @@ I would ask more questions about this later. Can you respond with a short 3 sent
   * clear / clr     : Clear chat history
   * copy / cp       : Copy last message to clipboard
   * history / h     : Show current history
+  * speak / say     : Speak out last response
   * help / ?        : Show this message
   * exit / quit / q : Exit the program
 
@@ -161,6 +157,8 @@ class History {
 
   get = () => this.history.map(msg => ({role: msg.role, content: msg.content}))
 
+  lastMessage = () => this.history.findLast(item => item.role === Role.Assistant)
+
   show = () => console.log(this.history)
 }
 
@@ -207,6 +205,7 @@ console.log(prompts.info.help)
 prompts.next()
 
 rl.on('line', (line) => {
+  say.stop()
   switch (line.toLowerCase().trim()) {
     case '': return prompts.next()
 
@@ -227,13 +226,21 @@ rl.on('line', (line) => {
       history.show()
       return prompts.next()
 
-    case 'cp': case 'copy':
-      const content = history.get().findLast(item => item.role === Role.Assistant)?.content
+    case 'say': case 'speak': {
+      const content = history.lastMessage()?.content
+      if (content) say.speak(content)
+      else console.warn(prompts.errors.nothingToSay)
+      return prompts.next()
+    }
+
+    case 'cp': case 'copy': {
+      const content = history.lastMessage()?.content
       if (content) {
         clipboard.writeSync(content)
         console.log(prompts.info.onCopy(content))
       } else console.warn(prompts.errors.nothingToCopy)
       return prompts.next()
+    }
 
     default:
       rl.pause()
@@ -277,6 +284,5 @@ rl.on('line', (line) => {
 /* TODO
 - PDF
 - Image rendering
-- speak command
 - Gif of terminal
 */
