@@ -35,6 +35,7 @@ const config = {
     temperature: 0.5
   },
   imageApiParams: {},
+  terminalImageParams: {width: '50%', height: '50%'},
   googleSearchAuth: {
     auth: process.env.GOOGLE_CUSTOM_SEARCH_API_KEY,
     cx: process.env.GOOGLE_CUSTOM_SEARCH_ENGINE_ID,
@@ -287,7 +288,7 @@ rl.on('line', (line) => {
         spinner.text = prompts.info.onImage
         return openai.createImage(Object.assign(config.imageApiParams, {prompt: line}))
           .then(response => got(response.data.data[0].url).buffer())
-          .then(body => terminalImage.buffer(body))
+          .then(body => terminalImage.buffer(body, config.terminalImageParams))
           .then(res => spinner.succeed('\n' + res))
       }
 
