@@ -7,7 +7,7 @@ Set Shell "bash"
 Set FontSize 20
 Set Width 2400
 Set Height 1800
-Set TypingSpeed 300ms
+Set TypingSpeed 100ms
 Set WindowBar Colorful
 
 Type "cd ~/workspace/chatgpt-cli" Enter Sleep 2s

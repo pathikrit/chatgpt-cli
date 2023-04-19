@@ -11,9 +11,9 @@ import chalk from 'chalk'
 
 // Terminal presentation stuff e.g. markdown, images, speech, clipboard etc
 import cliMd from 'cli-markdown'
-import say from 'say'
 import terminalImage from 'terminal-image'
 import clipboard from 'clipboardy'
+import say from 'say'
 
 // Web
 import {google} from 'googleapis'
