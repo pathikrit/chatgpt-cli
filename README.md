@@ -1,6 +1,6 @@
 ChatGPT CLI
 ---
-This is a tiny ([<300 LoC](app.js)) program written in node.js to run ChatGPT in your terminal that supports [web-browsing](#web-browsing), text-to-speech, image-generation etc.
+This is a tiny ([<300 LoC](app.js)) program written in vanilla node.js to run ChatGPT in your terminal that supports [web-browsing](#web-browsing), text-to-speech, image-generation etc.
 
 1. Install `yarn` and `node` e.g. using `brew`:
 ```shell
@@ -13,48 +13,7 @@ export OPENAI_API_KEY=XXXXXXXX # Get from https://platform.openai.com/account/ap
 yarn && node app.js
 ```
 
-## Sample interaction
-```
-System commands:
-  * clear / clr     : Clear chat history
-  * copy / cp       : Copy last message to clipboard
-  * history / h     : Show current history
-  * speak / say     : Speak out last response
-  * help / ?        : Show this message
-  * exit / quit / q : Exit the program
-
-Usage Tips:
-  - For multiline chats press PageDown
-  - Use Up/Down array keys to scrub through previous messages
-  - Include [web] anywhere in your prompt to force web browsing
-
-────────────────────────────────────────────────────────────────────────────────────
-> Hi! My name is Rick!
-Hi Rick! How can I assist you today?
-────────────────────────────────────────────────────────────────────────────────────
-> copy
-Copied last message to clipboard (34 characters)
-────────────────────────────────────────────────────────────────────────────────────
-> What is my name?
-Your name is Rick, as you mentioned earlier. How can I assist you today, Rick?
-────────────────────────────────────────────────────────────────────────────────────
-> clear
-Chat history cleared!
-────────────────────────────────────────────────────────────────────────────────────
-> What is my name?
-As an AI language model, I don't have access to personal information like your name unless you tell me what it is.
-────────────────────────────────────────────────────────────────────────────────────
-> Write a haiku about fish
-Fish swims in the sea
-Graceful, agile, and free
-In water, it be.
-────────────────────────────────────────────────────────────────────────────────────
-> How do humans make babies? Respond in emojis
-👨‍❤️‍️‍👩 + 💏️ = 👶
-────────────────────────────────────────────────────────────────────────────────────
-> exit
-Bye!
-```
+![demo](demo/demo.gif)
 
 ## Web Browsing
 Some queries depend on up-to-date info e.g.:
