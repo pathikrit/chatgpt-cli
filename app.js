@@ -34,6 +34,7 @@ const config = {
     max_tokens: 2048,
     temperature: 0.5
   },
+  imageApiParams: {},
   googleSearchAuth: {
     auth: process.env.GOOGLE_CUSTOM_SEARCH_API_KEY,
     cx: process.env.GOOGLE_CUSTOM_SEARCH_ENGINE_ID,
@@ -60,6 +61,7 @@ const prompts = {
     needed: [
       "not have access to real-time",
       "don't have access to real-time",
+      "don't have real-time",
       "not able to provide real-time",
       "not have real-time",
       "as of my training data",
@@ -177,6 +179,7 @@ process.stdin.on('keypress', (letter, key)=> {
   }
 })
 
+// TODO:
 // class DocChat {
 //   constructor(file) {
 //     file = untildify(file)
@@ -282,7 +285,7 @@ rl.on('line', (line) => {
 
       const genImage = () => {
         spinner.text = prompts.info.onImage
-        return openai.createImage({prompt: line})
+        return openai.createImage(Object.assign(config.imageApiParams, {prompt: line}))
           .then(response => got(response.data.data[0].url).buffer())
           .then(body => terminalImage.buffer(body))
           .then(res => spinner.succeed('\n' + res))
@@ -293,8 +296,3 @@ rl.on('line', (line) => {
       return task.catch(err => spinner.fail(err.stack ?? err.message ?? err)).finally(prompts.next)
   }
 })
-
-/* TODO
-- PDF
-- Gif of terminal
-*/
