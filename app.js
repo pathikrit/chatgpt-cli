@@ -31,7 +31,7 @@ const prompts = {
     rl.prompt()
   },
   completer: (line) => {
-    const completions = ['clear', 'exit', 'quit']
+    const completions = ['clear', 'copy', 'help', 'exit', 'quit']
     const hits = completions.filter(c => c.startsWith(line.toLowerCase().trim()))
     return [hits.length ? hits : completions, line]
   },
@@ -93,13 +93,32 @@ if (!config.openAiApiKey) {
   console.error(prompts.errors.missingOpenAiApiKey)
   process.exit(-1)
 }
-const openai = new OpenAIApi(new OpenAIConfig({apiKey: config.openAiApiKey}))
 
-const newHistory = () => prompts.system.map(prompt => {return {role: Role.System, content: prompt}})
-let history = newHistory()
+class History {
+  constructor() {
+    this.clear()
+  }
+
+  add = (message) => {
+    this.history.push(message)
+  }
+
+  clear = () => {
+    this.history = []
+    prompts.system.map(prompt => this.add({role: Role.System, content: prompt}))
+  }
+
+  get = () => {
+    return this.history
+  }
+}
+
+const openai = new OpenAIApi(new OpenAIConfig({apiKey: config.openAiApiKey}))
+const history = new History()
 
 const rl = readline.createInterface({input: process.stdin, output: process.stdout, completer: prompts.completer})
 // TODO: Hack to get around https://stackoverflow.com/questions/66604677/
+// TODO: True multiline support e.g. pasting
 const newLinePlaceholder = '\u2008'
 process.stdin.on('keypress', (letter, key)=> {
   if (key?.name === 'pagedown') {
@@ -139,12 +158,12 @@ rl.on('line', (line) => {
       return prompts.next()
 
     case 'clr': case 'clear':
-      history = newHistory()
+      history.clear()
       console.log(prompts.info.onClear)
       return prompts.next()
 
     case 'cp': case 'copy':
-      const content = history.findLast(item => item.role === Role.Assistant)?.content
+      const content = history.get().findLast(item => item.role === Role.Assistant)?.content
       if (content) {
         clipboard.writeSync(content)
         console.log(prompts.info.onCopy(content))
@@ -157,11 +176,11 @@ rl.on('line', (line) => {
       const chat = (params) => {
         const spinner = params.spinner ?? ora().start()
         spinner.text = prompts.info.onQuery
-        history.push({role: Role.User, content: params.message})
-        return openai.createChatCompletion(Object.assign(config.chatApiParams, {messages: history}))
+        history.add({role: Role.User, content: params.message})
+        return openai.createChatCompletion(Object.assign(config.chatApiParams, {messages: history.get()}))
           .then(res => {
             const message = res.data.choices[0].message
-            history.push(message)
+            history.add(message)
             const content = message.content
             const needWebBrowsing = !params.nested && prompts.needWebBrowsing.some(frag => content.toLowerCase().includes(frag))
             const output = content.includes('```') ? cliMd(content).trim() : chalk.bold(content) //TODO: better logic of whether output is in markdown
@@ -184,6 +203,7 @@ rl.on('line', (line) => {
 - PDF
 - Truncate history
 - Image rendering
+- speak command
 - Force internet search
 - Gif of terminal
 */
