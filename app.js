@@ -276,6 +276,7 @@ rl.on('line', (line) => {
               if (needWebBrowsing) {
                 spinner.warn(chalk.dim(output))
                 spinner = ora().start(prompts.info.onSearch)
+                //TODO: Ask gpt for a better query here
                 return googleSearch(params.message).then(text => chat({message: prompts.webBrowsing.postFacto(line, text), nested: true}))
               }
               return Promise.resolve(spinner.succeed(output))

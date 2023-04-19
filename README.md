@@ -13,7 +13,7 @@ export OPENAI_API_KEY=XXXXXXXX # Get from https://platform.openai.com/account/ap
 yarn && node app.js
 ```
 
-![demo](demo/demo.gif)
+<img src='demo/demo.gif' style="width:1200px; height:900px;"/>
 
 ## Web Browsing
 Some queries depend on up-to-date info e.g.:
