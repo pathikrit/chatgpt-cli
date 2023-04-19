@@ -40,30 +40,32 @@ const prompts = {
     'Always use code blocks with the appropriate language tags',
     'If the answer may have changed since your cut-off date, simply reply with "I do not have real-time information" and nothing else'
   ],
-  needWebBrowsing: [
-    'not have access to real-time',
-    "don't access to real-time",
-    'not able to provide real-time',
-    'not have real-time',
-    'as of my training data',
-    "as of september 2021",
-    "as of my programmed cut-off date"
-  ],
-  webSearch: (query, result) =>
-    `Okay, I found the following up-to-date web search results for "${query}":
+  webBrowsing: {
+    needed: [
+      "not have access to real-time",
+      "don't have access to real-time",
+      "not able to provide real-time",
+      "not have real-time",
+      "as of my training data",
+      "as of september 2021",
+      "as of my programmed cut-off date"
+    ],
+    postFacto: (query, result) => `
+    I found the following up-to-date web search results for "${query}":
     
       ${result}
       
     Using the above search results, can you now take a best guess at answering ${query}. 
     Exclude the disclaimer note about this information might be inaccurate or subject to change. 
-    Be short and don't say "based on the search results".`,
+    Be short and don't say "based on the search results".`
+  },
   chatWithDoc: (text) => `
     This is some text I extracted from a file:
     
     ${text}
     
     I would ask more questions about this later. Can you respond with a short 3 sentence summary in markdown bullets form?
-  `,
+   `,
   errors: {
     missingOpenAiApiKey: chalk.redBright('OPENAI_API_KEY must be set (see https://platform.openai.com/account/api-keys).'),
     missingGoogleKey: 'Cannot search the web since GOOGLE_CUSTOM_SEARCH_CONFIGs are not set',
@@ -102,6 +104,7 @@ class History {
   }
 
   add = (message) => {
+    message.content = message.content.trim()
     message.encoding = encode(message.content)
     message.numTokens = message.encoding.length
     this.history.push(message)
@@ -169,6 +172,7 @@ prompts.next()
 rl.on('line', (line) => {
   switch (line.toLowerCase().trim()) {
     case '': return prompts.next()
+
     case 'q': case 'quit': case 'exit':
       console.log(prompts.info.onExit)
       process.exit()
@@ -206,13 +210,13 @@ rl.on('line', (line) => {
             const message = res.data.choices[0].message
             history.add(message)
             const content = message.content
-            const needWebBrowsing = !params.nested && prompts.needWebBrowsing.some(frag => content.toLowerCase().includes(frag))
+            const needWebBrowsing = !params.nested && prompts.webBrowsing.needed.some(frag => content.toLowerCase().includes(frag))
             const output = content.includes('```') ? cliMd(content).trim() : chalk.bold(content) //TODO: better logic of whether output is in markdown
             if (needWebBrowsing) {
               spinner.warn(chalk.dim(output))
               const webSpinner = ora().start(prompts.info.onSearch)
               return googleSearch(params.message)
-                .then(text => chat({message: prompts.webSearch(line, text), nested: true, spinner: webSpinner}))
+                .then(text => chat({message: prompts.webBrowsing.postFacto(line, text), nested: true, spinner: webSpinner}))
                 .catch(err => handleError(webSpinner, err))
             }
             return Promise.resolve(spinner.succeed(output))
