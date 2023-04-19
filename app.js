@@ -104,7 +104,14 @@ class History {
     message.encoding = encode(message.content)
     message.numTokens = message.encoding.length
     this.history.push(message)
+    while (this.totalTokens() > config.chatApiParams.max_tokens) {
+      const idx = this.history.findIndex(msg => msg.role !== Role.System)
+      if (idx < 0) break
+      this.history.splice(idx, 1)
+    }
   }
+
+  totalTokens = () => this.history.map(msg => msg.numTokens).reduce((a, b) => a + b, 0)
 
   clear = () => {
     this.history = []
@@ -208,7 +215,6 @@ rl.on('line', (line) => {
 
 /* TODO
 - PDF
-- Truncate history
 - Image rendering
 - speak command
 - Force internet search
