@@ -1,16 +1,37 @@
+// Config stuff
 import dotenv from 'dotenv'
+
+// File system stuff
 import fs from 'fs'
 import readline from 'readline'
-import untildify from 'untildify'
+
+// Terminal UI stuff
 import ora from 'ora'
 import chalk from 'chalk'
+
+// Chat presentation stuff
 import cliMd from 'cli-markdown'
 import clipboard from 'clipboardy'
-import {Configuration as OpenAIConfig, OpenAIApi, ChatCompletionRequestMessageRoleEnum as Role} from 'openai'
+
 import {google} from 'googleapis'
+
+// Doc chat stuff
+import untildify from 'untildify'
 import flexsearch from 'flexsearch'
 import {readPdfText} from 'pdf-text-reader'
+
+// GPT stuff
+import {Configuration as OpenAIConfig, OpenAIApi, ChatCompletionRequestMessageRoleEnum as Role} from 'openai'
 import {encode} from 'gpt-3-encoder'
+
+// Text-To-Speech stuff
+import {TextToSpeechClient} from '@google-cloud/text-to-speech'
+
+// const ttsClient = new TextToSpeechClient()
+// const speak = (text) => ttsClient.synthesizeSpeech({input: {text: text}})
+//     .then(([response]) => fs.writeFileSync('output.mp3', response.audioContent, 'binary'))
+// await speak('Hello world!')
+// process.exit()
 
 dotenv.config()
 const config = {

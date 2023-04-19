@@ -72,7 +72,7 @@ Now you will get:
 > Whats the weather like in nyc today?
 ⚠ I do not have real-time information. Please check a weather website or app for the current weather in NYC.
 ⠸ Searching the web ...
-✔ Today in New York City, the temperature will be mostly cloudy with a high of 58°F (14°C) and a low of 46°F (8°C). There will be partly cloudy skies in the morning, which will become cloudy during the afternoon. There is a chance of light winds from the west, southwest.
+✔ As of April 19, 2023, the weather in New York City today is cloudy with a temperature of 67°F (19.4°C).
 ```
 
 You can also force web browsing by including `[web]` anywhere in your prompt.
