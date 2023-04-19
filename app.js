@@ -50,14 +50,17 @@ const prompts = {
       "as of september 2021",
       "as of my programmed cut-off date"
     ],
+    forcePhrase: '[web]',
     postFacto: (query, result) => `
     I found the following up-to-date web search results for "${query}":
     
       ${result}
       
     Using the above search results, can you now take a best guess at answering ${query}. 
-    Exclude the disclaimer note about this information might be inaccurate or subject to change. 
-    Be short and don't say "based on the search results".`
+    Exclude the disclaimer note about this information might be inaccurate or subject to change.
+    Be short and don't say "based on the search results". 
+    Btw, the date and time right now is ${new Date().toUTCString()}. Feel free to mention that in your response if needed.
+    `
   },
   chatWithDoc: (text) => `
     This is some text I extracted from a file:
@@ -113,6 +116,7 @@ class History {
       if (idx < 0) break
       this.history.splice(idx, 1)
     }
+    return this
   }
 
   totalTokens = () => this.history.map(msg => msg.numTokens).reduce((a, b) => a + b, 0)
@@ -204,6 +208,12 @@ rl.on('line', (line) => {
       const chat = (params) => {
         const spinner = params.spinner ?? ora().start()
         spinner.text = prompts.info.onQuery
+
+        // if (params.message.contains(prompts.webBrowsing.forcePhrase)) {
+        //   spinner.text = prompts.info.onSearch
+        //   googleSearch(params.message.replace(prompts.webBrowsing.forcePhrase, ' '))
+        // }
+
         history.add({role: Role.User, content: params.message})
         return openai.createChatCompletion(Object.assign(config.chatApiParams, {messages: history.get()}))
           .then(res => {
