@@ -18,7 +18,8 @@ yarn && node app.js
 Available commands:
     * clear / clr     : Clear chat history
     * copy / cp       : Copy last message to clipboard
-    * help / h        : Show this message
+    * history / hist  : Show current history
+    * help / ?        : Show this message
     * exit / quit / q : Exit the program
 For multiline chat, press PageDown
 ────────────────────────────────────────────────────────────────────────────────────

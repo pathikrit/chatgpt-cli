@@ -73,7 +73,8 @@ const prompts = {
     help: `Available commands:
     * clear / clr     : Clear chat history
     * copy / cp       : Copy last message to clipboard
-    * help / h        : Show this message
+    * history / hist  : Show current history
+    * help / ?        : Show this message
     * exit / quit / q : Exit the program
     
     - For multiline chats press PageDown
@@ -100,6 +101,8 @@ class History {
   }
 
   add = (message) => {
+    message.encoding = encode(message.content)
+    message.numTokens = message.encoding.length
     this.history.push(message)
   }
 
@@ -108,9 +111,9 @@ class History {
     prompts.system.map(prompt => this.add({role: Role.System, content: prompt}))
   }
 
-  get = () => {
-    return this.history
-  }
+  get = () => this.history.map(msg => ({role: msg.role, content: msg.content}))
+
+  show = () => console.log(this.history)
 }
 
 const openai = new OpenAIApi(new OpenAIConfig({apiKey: config.openAiApiKey}))
@@ -153,13 +156,17 @@ rl.on('line', (line) => {
       console.log(prompts.info.onExit)
       process.exit()
 
-    case 'h': case 'help':
+    case '?': case 'help':
       console.log(prompts.info.help)
       return prompts.next()
 
     case 'clr': case 'clear':
       history.clear()
       console.log(prompts.info.onClear)
+      return prompts.next()
+
+    case 'hist': case 'history':
+      history.show()
       return prompts.next()
 
     case 'cp': case 'copy':
