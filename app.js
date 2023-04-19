@@ -52,32 +52,34 @@ const prompts = {
       "as of my programmed cut-off date"
     ],
     forcePhrase: '[web]',
-    preFacto: (query, result) => `
-    Can you answer "${query}"?
-    I also found the following web search results for the same query:
-    
-      ${result}
-      
-    If needed, feel free to augment your response with anything helpful from the above search results too.
-    `,
-    postFacto: (query, result) => `
-    I found the following up-to-date web search results for "${query}":
-    
-      ${result}
-      
-    Using the above search results, can you now take a best guess at answering ${query}. 
-    Exclude the disclaimer note about this information might be inaccurate or subject to change.
-    Be short and don't say "based on the search results". 
-    Btw, the date and time right now is ${new Date().toLocaleString()}. Feel free to mention that in your response if needed.
-    `
+/***********************************************************************************************************************/
+    preFacto: (query, result) => 
+`Can you answer "${query}"?
+I also found the following web search results for the same query:
+
+  ${result}
+
+If needed, feel free to augment your response with anything helpful from the above search results too.
+`,
+/***********************************************************************************************************************/
+    postFacto: (query, result) => 
+`I found the following up-to-date web search results for "${query}":
+
+  ${result}
+
+Using the above search results, can you now take a best guess at answering ${query}. 
+Exclude the disclaimer note about this information might be inaccurate or subject to change.
+Be short and don't say "based on the search results". 
+Btw, the date and time right now is ${new Date().toLocaleString()}. Feel free to mention that in your response if needed.`
   },
-  chatWithDoc: (text) => `
-    This is some text I extracted from a file:
-    
-    ${text}
-    
-    I would ask more questions about this later. Can you respond with a short 3 sentence summary in markdown bullets form?
-   `,
+/***********************************************************************************************************************/
+  chatWithDoc: (text) => 
+`This is some text I extracted from a file:
+  
+  ${text}
+
+I would ask more questions about this later. Can you respond with a short 3 sentence summary in markdown bullets form?`,
+/***********************************************************************************************************************/
   errors: {
     missingOpenAiApiKey: chalk.redBright('OPENAI_API_KEY must be set (see https://platform.openai.com/account/api-keys).'),
     missingGoogleKey: 'Cannot search the web since GOOGLE_CUSTOM_SEARCH_CONFIGs are not set',
