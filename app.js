@@ -17,6 +17,7 @@ const config = {
   chatApiParams: {
     model: 'gpt-3.5-turbo', //Note: When you change this, you may also need to change the gpt-3-encoder library
     max_tokens: 2048,
+    temperature: 0.5
   },
   googleSearchAuth: {
     auth: process.env.GOOGLE_CUSTOM_SEARCH_API_KEY,
@@ -87,13 +88,13 @@ const prompts = {
     help: `Available commands:
     * clear / clr     : Clear chat history
     * copy / cp       : Copy last message to clipboard
-    * history / hist  : Show current history
+    * history / h     : Show current history
     * help / ?        : Show this message
     * exit / quit / q : Exit the program
     
     - For multiline chats press PageDown
     - Use Up/Down array keys to travel through history
-    `,
+    - Include [web] anywhere in your prompt to force web browsing`,
     onExit: chalk.italic('Bye!'),
     onClear: chalk.italic('Chat history cleared!'),
     onSearch: chalk.italic(`Searching the web`),
@@ -116,8 +117,7 @@ class History {
 
   add = (message) => {
     message.content = message.content.trim()
-    message.encoding = encode(message.content)
-    message.numTokens = message.encoding.length
+    message.numTokens = encode(message.content).length
     this.history.push(message)
     while (this.totalTokens() > config.chatApiParams.max_tokens) {
       const idx = this.history.findIndex(msg => msg.role !== Role.System)
@@ -197,7 +197,7 @@ rl.on('line', (line) => {
       console.log(prompts.info.onClear)
       return prompts.next()
 
-    case 'hist': case 'history':
+    case 'h': case 'history':
       history.show()
       return prompts.next()
 
