@@ -194,32 +194,32 @@ prompts.next()
 rl.on('line', (line) => {
   say.stop()
   switch (line.toLowerCase().trim()) {
-    case '': return prompts.next()
-
-    case 'q': case 'quit': case 'exit':
+    case '': {
+      return prompts.next()
+    }
+    case 'q': case 'quit': case 'exit': {
       console.log(prompts.info.onExit)
       process.exit()
-
-    case '?': case 'help':
+    }
+    case '?': case 'help': {
       console.log(prompts.info.help)
       return prompts.next()
-
-    case 'clr': case 'clear':
+    }
+    case 'clr': case 'clear': {
       history.clear()
       console.log(prompts.info.onClear)
       return prompts.next()
-
-    case 'h': case 'history':
+    }
+    case 'h': case 'history': {
       history.show()
       return prompts.next()
-
+    }
     case 'say': case 'speak': {
       const content = history.lastMessage()?.content
       if (content) say.speak(content)
       else console.warn(prompts.errors.nothingToSay)
       return prompts.next()
     }
-
     case 'cp': case 'copy': {
       const content = history.lastMessage()?.content
       if (content) {
@@ -228,8 +228,7 @@ rl.on('line', (line) => {
       } else console.warn(prompts.errors.nothingToCopy)
       return prompts.next()
     }
-
-    default:
+    default: {
       rl.pause()
       let spinner = ora().start()
       const chat = (params) => {
@@ -275,5 +274,6 @@ rl.on('line', (line) => {
       const task = line.includes('[img]') ? genImage() : chat({message: line})
 
       return task.catch(err => spinner.fail(err.stack ?? err.message ?? err)).finally(prompts.next)
+    }
   }
 })
