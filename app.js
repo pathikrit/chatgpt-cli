@@ -143,7 +143,8 @@ class History {
   }
 
   add = (message) => {
-    message.content = message.content.trim()
+    // OpenAI recommends replacing newlines with spaces for best results
+    message.content = message.content.replace(/\s\s+/g, ' ').trim()
     message.numTokens = encode(message.content).length
     this.history.push(message)
     while (this.totalTokens() > config.chatApiParams.max_tokens) {
@@ -172,10 +173,9 @@ const history = new History()
 
 const rl = readline.createInterface({input: process.stdin, output: process.stdout, completer: prompts.completer})
 // TODO: True multiline support e.g. pasting (Blocked by https://stackoverflow.com/questions/66604677/)
-const newLinePlaceholder = '\u2008'
 process.stdin.on('keypress', (letter, key)=> {
   if (key?.name === 'pagedown') {
-    rl.write(newLinePlaceholder)
+    rl.write(' ')
     process.stdout.write('\n')
   }
 })
@@ -212,8 +212,6 @@ prompts.next()
 
 rl.on('line', (line) => {
   say.stop()
-  line = line.replace(newLinePlaceholder, '\n').trim()
-
   switch (line.toLowerCase().trim()) {
     case '': return prompts.next()
 
