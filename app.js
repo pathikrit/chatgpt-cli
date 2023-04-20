@@ -42,11 +42,6 @@ const prompts = {
     console.log('────────────────────────────────────────────────────────────────────────────────────')
     rl.prompt()
   },
-  completer: (line) => {
-    const completions = ['clear', 'copy', 'help', 'exit', 'quit']
-    const hits = completions.filter(c => c.startsWith(line.toLowerCase().trim()))
-    return [hits.length ? hits : completions, line]
-  },
   system: [
     'Always use code blocks with the appropriate language tags',
     'If the answer may have changed since your cut-off date, simply reply with "I do not have real-time information" and nothing else'
@@ -120,10 +115,16 @@ Usage Tips:
     searchInfo: chalk.italic('(inferred from Google search)'),
     onQuery: chalk.italic(`Asking ${config.chatApiParams.model}`),
     onImage: chalk.italic(`Generating image`),
-    docQuery: (file) => chalk.italic(`Asking ${config.chatApiParams.model} about ${file}`),
+    //docQuery: (file) => chalk.italic(`Asking ${config.chatApiParams.model} about ${file}`),
     onCopy: (text) => chalk.italic(`Copied last message to clipboard (${text.length} characters)`)
   }
 }
+
+const systemCommands = prompts.info.help.split(/\r?\n/)
+  .filter(s => s.trim().startsWith('*'))
+  .flatMap(s => s.split(':')[0].split(' '))
+  .map(s => s.trim())
+  .filter(s => s.length > 3)
 
 if (!config.openAiApiKey) {
   console.error(prompts.errors.missingOpenAiApiKey)
@@ -164,7 +165,14 @@ class History {
 const openai = new OpenAIApi(new OpenAIConfig({apiKey: config.openAiApiKey}))
 const history = new History()
 
-const rl = readline.createInterface({input: process.stdin, output: process.stdout, completer: prompts.completer})
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+  completer: (line) => {
+    const hits = systemCommands.filter(c => c.startsWith(line.toLowerCase().trim()))
+    return [hits.length ? hits : systemCommands, line]
+  }
+})
 // TODO: True multiline support e.g. pasting (Blocked by https://stackoverflow.com/questions/66604677/)
 process.stdin.on('keypress', (letter, key)=> {
   if (key?.name === 'pagedown') {
