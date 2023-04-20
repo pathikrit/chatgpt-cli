@@ -2,6 +2,10 @@
 import dotenv from 'dotenv'
 dotenv.config()
 
+// file system stuff
+import * as fs from 'fs';
+import untildify from 'untildify'
+
 // I/O stuff
 import readline from 'readline'
 
@@ -21,6 +25,12 @@ import got from 'got'
 import {Configuration as OpenAIConfig, OpenAIApi, ChatCompletionRequestMessageRoleEnum as Role} from 'openai'
 import {encode} from 'gpt-3-encoder'
 
+// langchain stuff
+import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter'
+import { PDFLoader } from 'langchain/document_loaders/fs/pdf'
+import { MemoryVectorStore } from 'langchain/vectorstores/memory'
+import { OpenAIEmbeddings } from 'langchain/embeddings/openai'
+
 const config = {
   chatApiParams: {
     model: 'gpt-3.5-turbo', //Note: When you change this, you may also need to change the gpt-3-encoder library
@@ -29,6 +39,7 @@ const config = {
   },
   imageApiParams: {},
   terminalImageParams: {width: '50%', height: '50%'},
+  textSplitter: {chunkSize: 200, chunkOverlap: 20},
   googleSearchAuth: {
     auth: process.env.GOOGLE_CUSTOM_SEARCH_API_KEY,
     cx: process.env.GOOGLE_CUSTOM_SEARCH_ENGINE_ID,
@@ -79,12 +90,14 @@ Be short and don't say "based on the search results".
 Btw, the date and time right now is ${new Date().toLocaleString()}. Feel free to mention that in your response if needed.`
   },
 /***********************************************************************************************************************/
-  chatWithDoc: (text) => 
-`This is some text I extracted from a file:
+  chatWithDoc: (query, docs) =>
+`I was asked the following query: ${query}
   
-  ${text}
+Some relevant snippets from documents that I have that you may find useful in the context of my query:  
+  
+  ${docs.map(doc => doc.pageContent).join('\n')}
 
-I would ask more questions about this later. Can you respond with a short 3 sentence summary in markdown bullets form?`,
+Answer to best of your abilities the original query`,
 /***********************************************************************************************************************/
   errors: {
     missingOpenAiApiKey: chalk.redBright('OPENAI_API_KEY must be set (see https://platform.openai.com/account/api-keys).'),
@@ -108,6 +121,7 @@ Usage Tips:
   - Use Up/Down array keys to scrub through previous messages
   - Include [web] anywhere in your prompt to force web browsing
   - Include [img] anywhere in your prompt to generate an image (works best in iTerm which can display images)
+  - If you just enter a file or folder path, we will ingest text from it and add to context
 `,
     onExit: chalk.italic('Bye!'),
     onClear: chalk.italic('Chat history cleared!'),
@@ -115,7 +129,7 @@ Usage Tips:
     searchInfo: chalk.italic('(inferred from Google search)'),
     onQuery: chalk.italic(`Asking ${config.chatApiParams.model}`),
     onImage: chalk.italic(`Generating image`),
-    //docQuery: (file) => chalk.italic(`Asking ${config.chatApiParams.model} about ${file}`),
+    onDoc: (file, finish) => chalk.italic(finish ? `Ingested ${file}` : `Ingesting ${file}`),
     onCopy: (text) => chalk.italic(`Copied last message to clipboard (${text.length} characters)`)
   }
 }
@@ -129,6 +143,43 @@ const systemCommands = prompts.info.help.split(/\r?\n/)
 if (!config.openAiApiKey) {
   console.error(prompts.errors.missingOpenAiApiKey)
   process.exit(-1)
+}
+
+class DocChat {
+  static embeddings = new OpenAIEmbeddings({openAIApiKey: config.openAiApiKey})
+  static textSplitter = new RecursiveCharacterTextSplitter(config.textSplitter)
+
+  static isSupported = (file) => {
+    file = untildify(file)
+    // TODO: support directories
+    // TODO: support other file types like .txt and Word docs
+    return fs.existsSync(file) && file.endsWith('.pdf')
+  }
+
+  static toText = (file) => {
+    file = untildify(file)
+    if (!fs.existsSync(file)) return Promise.reject(`Missing file: ${file}`)
+    if (file.endsWith('.pdf')) return new PDFLoader(file).load()
+    return Promise.reject('Unsupported file type')
+  }
+
+  constructor() {
+    this.clear()
+  }
+
+  add = (file) => DocChat.toText(file)
+    .then(docs =>  DocChat.textSplitter.splitDocuments(docs))
+    .then(docs => this.vectorStore.addDocuments(docs))
+    .then(_ => this.hasDocs = true)
+
+  clear = () => {
+    this.vectorStore = new MemoryVectorStore(DocChat.embeddings)
+    this.hasDocs = false
+  }
+
+  //TODO: add summarization
+
+  query = (query) => this.vectorStore.similaritySearch(query, Math.floor(config.chatApiParams.max_tokens/config.textSplitter.chunkSize))
 }
 
 class History {
@@ -164,11 +215,13 @@ class History {
 
 const openai = new OpenAIApi(new OpenAIConfig({apiKey: config.openAiApiKey}))
 const history = new History()
+const docChat = new DocChat()
 
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
   completer: (line) => {
+    // TODO: Auto complete file paths
     const hits = systemCommands.filter(c => c.startsWith(line.toLowerCase().trim()))
     return [hits.length ? hits : systemCommands, line]
   }
@@ -207,6 +260,7 @@ rl.on('line', (line) => {
     }
     case 'clr': case 'clear': {
       history.clear()
+      docChat.clear()
       console.log(prompts.info.onClear)
       return prompts.next()
     }
@@ -237,6 +291,8 @@ rl.on('line', (line) => {
             spinner.text = prompts.info.onSearch
             params.message = params.message.replace(prompts.webBrowsing.forcePhrase, ' ').trim()
             return googleSearch(params.message).then(result => prompts.webBrowsing.preFacto(params.message, result))
+          } else if (docChat.hasDocs) {
+            return docChat.query(params.message).then(docs => docs.length ? prompts.chatWithDoc(params.message, docs) : params.message)
           } else {
             return Promise.resolve(params.message)
           }
@@ -271,7 +327,15 @@ rl.on('line', (line) => {
           .then(res => spinner.succeed('\n' + res))
       }
 
-      const task = line.includes('[img]') ? genImage() : chat({message: line})
+      const consumeDoc = (file) => {
+        spinner.text = prompts.info.onDoc(file, false)
+        return docChat.add(file).then(_ => spinner.succeed(prompts.info.onDoc(file, true)))
+      }
+
+      let task = undefined
+      if (line.includes('[img]')) task = genImage()
+      else if (DocChat.isSupported(line)) task = consumeDoc(line)
+      else task = chat({message: line})
 
       return task.catch(err => spinner.fail(err.stack ?? err.message ?? err)).finally(prompts.next)
     }
