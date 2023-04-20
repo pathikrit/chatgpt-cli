@@ -19,6 +19,8 @@ Type "What's my name?" Enter Sleep 20s
 Type "Write a python code to add 2 numbers" Enter Sleep 20s
 Type "copy" Enter Sleep 10s
 Type "How do humans make babies. Respond in emojis only" Enter Sleep 20s
-Type "What's the weather in nyc today?" Enter Sleep 60s
-Type "[img] Happy cat" Enter Sleep 60s
+Type " What's the price of AAPL?" Enter Sleep 60s
+Type "~/Downloads/principles.pdf" Enter Sleep 60s
+Type "What's the top management principle?" Enter Sleep 60s
+Type "[img] Cat with a hat" Enter Sleep 60s
 Type "exit" Enter Sleep 20s

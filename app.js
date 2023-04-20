@@ -189,7 +189,7 @@ class History {
 
   add = (message) => {
     // OpenAI recommends replacing newlines with spaces for best results
-    message.content = message.content.replace(/\s\s+/g, ' ').trim()
+    if (message.role === Role.User) message.content = message.content.replace(/\s\s+/g, ' ').trim()
     message.numTokens = encode(message.content).length
     this.history.push(message)
     while (this.totalTokens() > config.chatApiParams.max_tokens) {

@@ -1,6 +1,6 @@
 ChatGPT CLI
 ---
-This is a tiny ([<300 LoC](app.js)) program written in vanilla node.js to run ChatGPT in your terminal that supports [web-browsing](#web-browsing), text-to-speech, image-generation, chat history, auto-completions etc.
+This is a tiny ([<500 LoC](app.js)) toy program written in node.js to run ChatGPT in your terminal that supports [web-browsing](#web-browsing), text-to-speech, image-generation, chat history, auto-completions, [document chatting](#chatting-with-documents) etc.
 
 1. Install `yarn` and `node` e.g. using `brew`:
 ```shell
@@ -36,3 +36,14 @@ Now you will get:
 ```
 
 You can also force web browsing by including `[web]` anywhere in your prompt.
+
+### Chatting with documents
+Give file path or folder:
+```shell
+> ~/Downloads/Principles by Ray Dalio.pdf
+✔ Ingested ~/Downloads/Principles by Ray Dalio.pdf
+────────────────────────────────────────────────────────────────────────────────────
+> What's the top management principle?
+✔ Based on the snippets provided, it seems that Ray Dalio's management principles emphasize the importance of clear communication, delineation of responsibilities, logic and reason in decision-making, constant feedback and discussion, matching the right people to the job, synthesizing and connecting the dots, and a problem-solving approach. However, it is not clear from the given information what the top management principle is according to Ray Dalio.
+────────────────────────────────────────────────────────────────────────────────────
+```
