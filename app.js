@@ -5,6 +5,7 @@ dotenv.config()
 // file system stuff
 import * as fs from 'fs';
 import untildify from 'untildify'
+import downloadsFolder from 'downloads-folder'
 
 // I/O stuff
 import readline from 'readline'
@@ -37,6 +38,7 @@ const config = {
     max_tokens: 2048,
     temperature: 0.5
   },
+  downloadsFolder: downloadsFolder(),
   imageApiParams: {},
   terminalImageParams: {width: '50%', height: '50%'},
   textSplitter: {chunkSize: 200, chunkOverlap: 20},
@@ -57,6 +59,7 @@ const prompts = {
     'Always use code blocks with the appropriate language tags',
     'If the answer may have changed since your cut-off date, simply reply with "I do not have real-time information" and nothing else'
   ],
+  imagePhrase: '[img]',
   webBrowsing: {
     needed: [
       "not have access to real-time",
@@ -129,6 +132,7 @@ Usage Tips:
     searchInfo: chalk.italic('(inferred from Google search)'),
     onQuery: chalk.italic(`Asking ${config.chatApiParams.model}`),
     onImage: chalk.italic(`Generating image`),
+    imageSaved: (file) => chalk.italic(`Image saved to ${file}`),
     onDoc: (file, finish) => chalk.italic(finish ? `Ingested ${file}` : `Ingesting ${file}`),
     onCopy: (text) => chalk.italic(`Copied last message to clipboard (${text.length} characters)`)
   }
@@ -319,12 +323,18 @@ rl.on('line', (line) => {
         return promptEngineer().catch(_ => Promise.resolve(params.message)).then(makeRequest)
       }
 
-      const genImage = () => {
+      const genImage = (prompt) => {
         spinner.text = prompts.info.onImage
-        return openai.createImage(Object.assign(config.imageApiParams, {prompt: line}))
+        return openai.createImage(Object.assign(config.imageApiParams, {prompt: prompt}))
           .then(response => got(response.data.data[0].url).buffer())
-          .then(body => terminalImage.buffer(body, config.terminalImageParams))
-          .then(res => spinner.succeed('\n' + res))
+          .then(buffer => {
+            const file = `${config.downloadsFolder}/${prompt.replace(/ /g,"_")}.jpg`
+            fs.writeFileSync(file, buffer);
+            spinner.succeed(prompts.info.imageSaved(file))
+            return file
+          })
+          .then(file => terminalImage.file(file, config.terminalImageParams))
+          .then(res => console.log(res))
       }
 
       const consumeDoc = (file) => {
@@ -333,7 +343,7 @@ rl.on('line', (line) => {
       }
 
       let task = undefined
-      if (line.includes('[img]')) task = genImage()
+      if (line.includes(prompts.imagePhrase)) task = genImage(line.replace(prompts.imagePhrase, '').trim())
       else if (DocChat.isSupported(line)) task = consumeDoc(line)
       else task = chat({message: line})
 
