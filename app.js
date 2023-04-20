@@ -5,24 +5,17 @@ dotenv.config()
 // I/O stuff
 import readline from 'readline'
 
-// Terminal font stuff
-import ora from 'ora'
-import chalk from 'chalk'
-
-// Terminal presentation stuff e.g. markdown, images, speech, clipboard etc
-import cliMd from 'cli-markdown'
-import terminalImage from 'terminal-image'
-import clipboard from 'clipboardy'
-import say from 'say'
+// Terminal UX stuff e.g. markdown, images, speech, clipboard etc
+import ora from 'ora'                       // Show spinners in terminal
+import chalk from 'chalk'                   // Terminal font colors
+import cliMd from 'cli-markdown'            // Show markdown in terminals
+import terminalImage from 'terminal-image'  // Show images in terminals
+import clipboard from 'clipboardy'          // Terminal clipboard support
+import say from 'say'                       // Text to speech for terminals
 
 // Web
 import {google} from 'googleapis'
 import got from 'got'
-
-// Doc chat stuff
-import untildify from 'untildify'
-import flexsearch from 'flexsearch'
-import {readPdfText} from 'pdf-text-reader'
 
 // GPT stuff
 import {Configuration as OpenAIConfig, OpenAIApi, ChatCompletionRequestMessageRoleEnum as Role} from 'openai'
@@ -179,26 +172,6 @@ process.stdin.on('keypress', (letter, key)=> {
     process.stdout.write('\n')
   }
 })
-
-// TODO:
-// class DocChat {
-//   constructor(file) {
-//     file = untildify(file)
-//     // TODO: support other file types like .txt and Word docs
-//     if (file.endsWith('.pdf')) {
-//       const index = new flexsearch.Index()
-//       this.indexing = readPdfText(file)
-//         .then(pages => pages.forEach((page, i) => index.add(i, page.lines.join('\n'))))
-//         .then(_ => index)
-//     }
-//   }
-//
-//   query = (q, n = 3) => this.indexing.then(index => index.search(q, n))
-// }
-//
-// const docChat = new DocChat('~/Downloads/48laws.pdf')
-// docChat.query('Use Bait?')
-//   .then(res => console.log(res))
 
 const googleSearch = (query) => config.googleSearchAuth.auth && config.googleSearchAuth.cx ?
   google.customsearch('v1').cse
