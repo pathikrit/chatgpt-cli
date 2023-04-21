@@ -153,18 +153,13 @@ class DocChat {
   static embeddings = new OpenAIEmbeddings({openAIApiKey: config.openAiApiKey})
   static textSplitter = new RecursiveCharacterTextSplitter(config.textSplitter)
 
-  static isSupported = (file) => {
-    file = untildify(file)
-    // TODO: support directories
-    // TODO: support other file types like .txt and Word docs
-    return fs.existsSync(file) && file.endsWith('.pdf')
-  }
+  static isSupported = (file) => DocChat.toText(file, true)
 
-  static toText = (file) => {
+  static toText = (file, checkOnly = false) => {
     file = untildify(file)
-    if (!fs.existsSync(file)) return Promise.reject(`Missing file: ${file}`)
-    if (file.endsWith('.pdf')) return new PDFLoader(file).load()
-    return Promise.reject('Unsupported file type')
+    if (!fs.existsSync(file)) return checkOnly ? false : Promise.reject(`Missing file: ${file}`)
+    if (file.endsWith('.pdf')) return checkOnly ? true : new PDFLoader(file).load()
+    return checkOnly ? false : Promise.reject('Unsupported file type')
   }
 
   constructor() {

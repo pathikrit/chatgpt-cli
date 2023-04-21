@@ -28,7 +28,7 @@ export GOOGLE_CUSTOM_SEARCH_API_KEY=XXXXX # Get from https://developers.google.c
 ```
 
 Now you will get:
-```shell
+```
 > Whats the weather like in nyc today?
 ⚠ I do not have real-time information. Please check a weather website or app for the current weather in NYC.
 ⠸ Searching the web ...
@@ -39,7 +39,7 @@ You can also force web browsing by including `[web]` anywhere in your prompt.
 
 ## Chatting with documents
 Give file path or folder:
-```shell
+```
 > ~/Downloads/Principles by Ray Dalio.pdf
 ✔ Ingested ~/Downloads/Principles by Ray Dalio.pdf
 ────────────────────────────────────────────────────────────────────────────────────
