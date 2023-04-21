@@ -19,13 +19,14 @@ import clipboard from 'clipboardy'          // Terminal clipboard support
 import say from 'say'                       // Text to speech for terminals
 
 // Web
-import {google} from 'googleapis'
+import { google } from 'googleapis'
 import got from 'got'
 
 // GPT stuff
-// TODO: Move to langchain one esp. streaming
-import {Configuration as OpenAIConfig, OpenAIApi, ChatCompletionRequestMessageRoleEnum as Role} from 'openai'
-import {encode} from 'gpt-3-encoder'
+// TODO: Move to langchain client and prompt templates
+// TODO: streaming + cancellation
+import { Configuration as OpenAIConfig, OpenAIApi, ChatCompletionRequestMessageRoleEnum as Role } from 'openai'
+import { encode } from 'gpt-3-encoder'
 
 // langchain stuff
 import { OpenAI } from 'langchain/llms/openai'
@@ -45,6 +46,7 @@ const config = {
     max_tokens: 2048,
     temperature: 0.5
   },
+  summaryPages: 10,
   downloadsFolder: downloadsFolder(),
   imageApiParams: {},
   terminalImageParams: {width: '50%', height: '50%'},
@@ -141,7 +143,7 @@ Usage Tips:
     onQuery: chalk.italic(`Asking ${config.chatApiParams.model}`),
     onImage: chalk.italic(`Generating image`),
     imageSaved: (file) => chalk.italic(`Image saved to ${file}`),
-    onDoc: (file, finish) => chalk.italic(finish ? `Ingested ${file}` : `Ingesting ${file}`),
+    onDoc: (file, finish) => chalk.italic(finish ? `Ingested ${file}. Here's a summary of first ${config.summaryPages} pages:` : `Ingesting ${file}`),
     onCopy: (text) => chalk.italic(`Copied last message to clipboard (${text.length} characters)`)
   }
 }
@@ -184,9 +186,8 @@ class DocChat {
     .then(docs => {
       this.vectorStore.addDocuments(docs)
       this.hasDocs = true
-      //TODO: add summarization
-      //const text = docs.map(doc => doc.pageContent).join('')
-      //return DocChat.summarizer.call({input_document: text})
+      const text = docs.slice(0, config.summaryPages).map(doc => doc.pageContent).join('')
+      return DocChat.summarizer.call({input_document: text}).then(res => res.text.trim())
     })
 
   clear = () => {
@@ -361,7 +362,7 @@ rl.on('line', (line) => {
         spinner.text = prompts.info.onDoc(file, false)
         return docChat.add(file).then(summary => {
           spinner.succeed(prompts.info.onDoc(file, true))
-          //console.log(summary)
+          console.log(summary)
         })
       }
 
