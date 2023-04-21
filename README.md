@@ -38,7 +38,7 @@ Now you will get:
 You can also force web browsing by including `[web]` anywhere in your prompt.
 
 ## Chatting with documents
-Give file path or folder:
+Give a file path or folder (hit tab to autocomplete paths):
 ```
 > ~/Downloads/Principles by Ray Dalio.pdf
 ✔ Ingested ~/Downloads/Principles by Ray Dalio.pdf

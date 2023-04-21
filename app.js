@@ -23,7 +23,7 @@ import {google} from 'googleapis'
 import got from 'got'
 
 // GPT stuff
-// TODO: Move to langchain one
+// TODO: Move to langchain one esp. streaming
 import {Configuration as OpenAIConfig, OpenAIApi, ChatCompletionRequestMessageRoleEnum as Role} from 'openai'
 import {encode} from 'gpt-3-encoder'
 
@@ -128,10 +128,11 @@ Answer to best of your abilities the original query`,
 
 Usage Tips:
   - For multiline chats press PageDown
-  - Use Up/Down array keys to scrub through previous messages
+  - Use Up/Down array keys to scrub through previous messages  
   - Include [web] anywhere in your prompt to force web browsing
-  - Include [img] anywhere in your prompt to generate an image (works best in iTerm which can display images)
+  - Include [img] anywhere in your prompt to generate an image
   - If you just enter a file or folder path, we will ingest text from it and add to context
+  - If entering path for document chat, use TAB to do path completion
 `,
     onExit: chalk.italic('Bye!'),
     onClear: chalk.italic('Chat history cleared!'),
@@ -235,7 +236,15 @@ const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
   completer: (line) => {
-    // TODO: Auto complete file paths
+    // See: https://stackoverflow.com/questions/42197385/
+    if (line.includes('/')) {
+      const dir = line.substring(0, line.lastIndexOf('/') + 1)
+      if (fs.existsSync(untildify(dir))) {
+        const suffix = line.substring(line.lastIndexOf('/') + 1)
+        const hits = fs.readdirSync(untildify(dir)).filter(file => file.startsWith(suffix)).map(file => dir + file)
+        if (hits.length) return [hits, line]
+      }
+    }
     const hits = systemCommands.filter(c => c.startsWith(line.toLowerCase().trim()))
     return [hits.length ? hits : systemCommands, line]
   }
