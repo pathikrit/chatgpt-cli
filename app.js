@@ -23,13 +23,16 @@ import {google} from 'googleapis'
 import got from 'got'
 
 // GPT stuff
+// TODO: Move to langchain one
 import {Configuration as OpenAIConfig, OpenAIApi, ChatCompletionRequestMessageRoleEnum as Role} from 'openai'
 import {encode} from 'gpt-3-encoder'
 
 // langchain stuff
+import { OpenAI } from 'langchain/llms/openai'
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter'
 import { MemoryVectorStore } from 'langchain/vectorstores/memory'
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai'
+import { loadSummarizationChain, AnalyzeDocumentChain } from 'langchain/chains'
 
 // Document loaders
 import { PDFLoader } from 'langchain/document_loaders/fs/pdf'
@@ -157,6 +160,8 @@ class DocChat {
   static embeddings = new OpenAIEmbeddings({openAIApiKey: config.openAiApiKey})
   static textSplitter = new RecursiveCharacterTextSplitter(config.textSplitter)
 
+  static summarizer = new AnalyzeDocumentChain({combineDocumentsChain: loadSummarizationChain(new OpenAI({ temperature: 0 }))})
+
   // TODO: support directories
   static isSupported = (file) => DocChat.toText(file, true)
 
@@ -175,15 +180,18 @@ class DocChat {
 
   add = (file) => DocChat.toText(file)
     .then(docs =>  DocChat.textSplitter.splitDocuments(docs))
-    .then(docs => this.vectorStore.addDocuments(docs))
-    .then(_ => this.hasDocs = true)
+    .then(docs => {
+      this.vectorStore.addDocuments(docs)
+      this.hasDocs = true
+      //TODO: add summarization
+      //const text = docs.map(doc => doc.pageContent).join('')
+      //return DocChat.summarizer.call({input_document: text})
+    })
 
   clear = () => {
     this.vectorStore = new MemoryVectorStore(DocChat.embeddings)
     this.hasDocs = false
   }
-
-  //TODO: add summarization
 
   query = (query) => this.vectorStore.similaritySearch(query, Math.floor(config.chatApiParams.max_tokens/config.textSplitter.chunkSize))
 }
@@ -342,7 +350,10 @@ rl.on('line', (line) => {
 
       const consumeDoc = (file) => {
         spinner.text = prompts.info.onDoc(file, false)
-        return docChat.add(file).then(_ => spinner.succeed(prompts.info.onDoc(file, true)))
+        return docChat.add(file).then(summary => {
+          spinner.succeed(prompts.info.onDoc(file, true))
+          //console.log(summary)
+        })
       }
 
       let task = undefined
