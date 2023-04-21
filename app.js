@@ -28,9 +28,13 @@ import {encode} from 'gpt-3-encoder'
 
 // langchain stuff
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter'
-import { PDFLoader } from 'langchain/document_loaders/fs/pdf'
 import { MemoryVectorStore } from 'langchain/vectorstores/memory'
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai'
+
+// Document loaders
+import { PDFLoader } from 'langchain/document_loaders/fs/pdf'
+import { TextLoader } from 'langchain/document_loaders/fs/text'
+import { DocxLoader } from 'langchain/document_loaders/fs/docx'
 
 const config = {
   chatApiParams: {
@@ -154,13 +158,14 @@ class DocChat {
   static textSplitter = new RecursiveCharacterTextSplitter(config.textSplitter)
 
   // TODO: support directories
-  // TODO: support other file types like .txt and Word docs
   static isSupported = (file) => DocChat.toText(file, true)
 
   static toText = (file, checkOnly = false) => {
     file = untildify(file)
     if (!fs.existsSync(file)) return checkOnly ? false : Promise.reject(`Missing file: ${file}`)
     if (file.endsWith('.pdf')) return checkOnly ? true : new PDFLoader(file).load()
+    if (file.endsWith('.docx')) return checkOnly ? true : new DocxLoader(file).load()
+    if (file.endsWith('.text')) return checkOnly ? true : new TextLoader(file).load()
     return checkOnly ? false : Promise.reject('Unsupported file type')
   }
 
