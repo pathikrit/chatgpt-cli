@@ -169,12 +169,16 @@ class DocChat {
 
   static summarizer = new AnalyzeDocumentChain({combineDocumentsChain: loadSummarizationChain(new OpenAI({ temperature: 0 }))})
 
-  // TODO: support directories
   static isSupported = (file) => DocChat.toText(file, true)
 
   static toText = (file, checkOnly = false) => {
     file = untildify(file)
     if (!fs.existsSync(file)) return checkOnly ? false : Promise.reject(`Missing file: ${file}`)
+    // TODO: support directories
+    // if (fs.lstatSync(file).isDirectory()) {
+    //   const children = fs.readdirSync(file).filter(f => !fs.lstatSync(f).isDirectory())
+    //   return checkOnly ? children.some(c => DocChat.toText(c, checkOnly)) : Promise.all(children.map(c => DocChat.toText))
+    // }
     if (file.endsWith('.pdf')) return checkOnly ? true : new PDFLoader(file).load()
     if (file.endsWith('.docx')) return checkOnly ? true : new DocxLoader(file).load()
     if (file.endsWith('.text')) return checkOnly ? true : new TextLoader(file).load()

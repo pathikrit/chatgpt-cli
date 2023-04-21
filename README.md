@@ -70,4 +70,4 @@ Ray encourages readers to think for themselves and make clear-headed decisions i
 ────────────────────────────────────────────────────────────────────────────────────
 ```
 
-[demo]: https://vhs.charm.sh/vhs-3HbDJB8vCfEkx5jyCf8Bkb.gif
+[demo]: https://vhs.charm.sh/vhs-1nlekNgIPQeC2hsGYK2191.gif
