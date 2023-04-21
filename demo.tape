@@ -1,5 +1,5 @@
 # See https://github.com/charmbracelet/vhs
-# Generate new demo by doing `vhs demo.tape`
+# Generate new demo by doing `vhs demo.tape; vhs publish demo.gif`
 
 Output demo.gif
 

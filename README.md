@@ -13,7 +13,7 @@ export OPENAI_API_KEY=XXXXXXXX # Get from https://platform.openai.com/account/ap
 yarn && node app.js
 ```
 
-<img src='demo/demo.gif' style="width:1200px; height:900px;"/>
+![Made with VHS](https://vhs.charm.sh/vhs-2LTFYeOB2XjjO3XxvUJyvo.gif)
 
 ## Web Browsing
 Some queries depend on up-to-date info e.g.:
