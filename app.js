@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 // Config stuff
 import dotenv from 'dotenv'
 dotenv.config()

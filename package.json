@@ -1,7 +1,7 @@
 {
   "name": "chatgpt-cli",
   "version": "0.0.1",
-  "exports": "./app.js",
+  "bin": "./app.js",
   "license": "MIT",
   "type": "module",
   "engines": {
