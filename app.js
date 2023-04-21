@@ -126,6 +126,7 @@ Answer to best of your abilities the original query`,
   * clear / clr     : Clear chat history
   * copy / cp       : Copy last message to clipboard
   * history / h     : Show current history
+  * export          : Save current chat history as ChatML doc
   * speak / say     : Speak out last response
   * help / ?        : Show this message
   * exit / quit / q : Exit the program
@@ -138,6 +139,7 @@ Usage Tips:
   - If you just enter a file or folder path, we will ingest text from it and add to context
   - If entering path for document chat, use TAB to do path completion
 `,
+    exported: (file) => chalk.italic(`Saved chat history to ${file}`),
     onExit: chalk.italic('Bye!'),
     onClear: chalk.italic('Chat history cleared!'),
     onSearch: chalk.italic(`Searching the web`),
@@ -292,6 +294,12 @@ rl.on('line', (line) => {
     }
     case 'h': case 'history': {
       history.show()
+      return prompts.next()
+    }
+    case 'export': {
+      const file = `${config.downloadsFolder}/${Date.now()}.chatml.json`
+      fs.writeFileSync(file, JSON.stringify(history.get()))
+      console.log(prompts.info.exported(file))
       return prompts.next()
     }
     case 'say': case 'speak': {

@@ -5,6 +5,7 @@ This is a tiny ([<500 LoC](app.js)) toy program written in node.js to run ChatGP
 - text-to-speech (enter `speak`)
 - image-generation (add `[img]` anywhere in prompt)
 - chat history (enter `h`)
+- export session to [ChatML](https://cobusgreyling.medium.com/the-introduction-of-chat-markup-language-chatml-is-important-for-a-number-of-reasons-5061f6fe2a85) (enter `export`) 
 - auto-completions (hit `TAB`)
 - [document chatting & summarization](#chatting-with-documents) 
 
