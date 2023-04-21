@@ -153,6 +153,8 @@ class DocChat {
   static embeddings = new OpenAIEmbeddings({openAIApiKey: config.openAiApiKey})
   static textSplitter = new RecursiveCharacterTextSplitter(config.textSplitter)
 
+  // TODO: support directories
+  // TODO: support other file types like .txt and Word docs
   static isSupported = (file) => DocChat.toText(file, true)
 
   static toText = (file, checkOnly = false) => {
@@ -305,14 +307,15 @@ rl.on('line', (line) => {
               history.add(message)
               const content = message.content
               const needWebBrowsing = !params.nested && prompts.webBrowsing.needed.some(frag => content.toLowerCase().includes(frag))
-              const output = content.includes('```') ? cliMd(content).trim() : chalk.bold(content) //TODO: better logic of whether output is in markdown
+              const output = cliMd(content).trim()
               if (needWebBrowsing) {
                 spinner.warn(chalk.dim(output))
                 spinner = ora().start(prompts.info.onSearch)
                 //TODO: Ask gpt for a better query here
                 return googleSearch(params.message).then(text => chat({message: prompts.webBrowsing.postFacto(line, text), nested: true}))
               }
-              return Promise.resolve(spinner.succeed(output))
+              spinner.stop()
+              return Promise.resolve(console.log(output))
             })
         }
         return promptEngineer().catch(_ => Promise.resolve(params.message)).then(makeRequest)
