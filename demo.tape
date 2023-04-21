@@ -4,9 +4,9 @@
 Output demo.gif
 
 Set Shell "bash"
-Set FontSize 32
-Set Width 2400
-Set Height 1800
+Set FontSize 24
+Set Width 1600
+Set Height 1200
 Set TypingSpeed 100ms
 Set WindowBar Colorful
 
@@ -23,5 +23,5 @@ Type " What were the top 5 most populated countries in 1950 and their population
 Type " What's the price of AAPL?" Enter Sleep 60s
 Type "~/Downloads/principles.pdf" Enter Sleep 60s
 Type "What's the top management principle?" Enter Sleep 60s
-Type "[img] Cat with a hat" Enter Sleep 60s
+Type "[img] Orange tabby cat wearing a party hat on a dark background" Enter Sleep 60s
 Type "exit" Enter Sleep 20s

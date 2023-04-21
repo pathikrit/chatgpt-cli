@@ -21,8 +21,8 @@ export OPENAI_API_KEY=XXXXXXXX # Get from https://platform.openai.com/account/ap
 yarn && node app.js
 ```
 
-## [Demo](https://vhs.charm.sh/vhs-4LWWn2aGy7cg8HC9TW4hLo.gif)
-![VHS](https://vhs.charm.sh/vhs-4LWWn2aGy7cg8HC9TW4hLo.gif)
+## [Demo][demo]
+![demo][demo]
 
 ## Web Browsing
 Some queries depend on up-to-date info e.g.:
@@ -61,3 +61,5 @@ Ray encourages readers to think for themselves and make clear-headed decisions i
 ✔ Based on the snippets provided, it seems that Ray Dalio's management principles emphasize the importance of clear communication, delineation of responsibilities, logic and reason in decision-making, constant feedback and discussion, matching the right people to the job, synthesizing and connecting the dots, and a problem-solving approach. 
 ────────────────────────────────────────────────────────────────────────────────────
 ```
+
+[demo]: https://vhs.charm.sh/vhs-3HbDJB8vCfEkx5jyCf8Bkb.gif
