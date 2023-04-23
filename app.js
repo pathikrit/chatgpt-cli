@@ -16,6 +16,7 @@ import readline from 'readline'
 import ora from 'ora'                       // Show spinners in terminal
 import chalk from 'chalk'                   // Terminal font colors
 import cliMd from 'cli-markdown'            // Show markdown in terminals
+import mdjs from '@moox/markdown-to-json'   // Display Help from README
 import terminalImage from 'terminal-image'  // Show images in terminals
 import clipboard from 'clipboardy'          // Terminal clipboard support
 import say from 'say'                       // Text to speech for terminals
@@ -121,24 +122,9 @@ Answer to best of your abilities the original query`,
     nothingToSay: 'No messages yet; nothing to say'
   },
   info: {
-    help:
-`System commands:
-  * clear / clr     : Clear chat history
-  * copy / cp       : Copy last message to clipboard
-  * history / h     : Show current history
-  * export          : Save current chat history as ChatML doc
-  * speak / say     : Speak out last response
-  * help / ?        : Show this message
-  * exit / quit / q : Exit the program
-
-Usage Tips:
-  - For multiline chats press PageDown
-  - Use Up/Down array keys to scrub through previous messages  
-  - Include [web] anywhere in your prompt to force web browsing
-  - Include [img] anywhere in your prompt to generate an image
-  - If you just enter a file or folder path, we will ingest text from it and add to context
-  - If entering path for document chat, use TAB to do path completion
-`,
+    help: mdjs.markdownAsJsTree(fs.readFileSync('README.md', 'utf-8')).body.children
+      .flatMap(c => c.children && c.children[0]?.tag === 'code' ? c.children[0].children : [])
+      .find(c => c.includes('System commands')),
     exported: (file) => chalk.italic(`Saved chat history to ${file}`),
     onExit: chalk.italic('Bye!'),
     onClear: chalk.italic('Chat history cleared!'),
@@ -179,6 +165,7 @@ class DocChat {
     //   const children = fs.readdirSync(file).filter(f => !fs.lstatSync(f).isDirectory())
     //   return checkOnly ? children.some(c => DocChat.toText(c, checkOnly)) : Promise.all(children.map(c => DocChat.toText))
     // }
+    // TODO: Support web page links
     if (file.endsWith('.pdf')) return checkOnly ? true : new PDFLoader(file).load()
     if (file.endsWith('.docx')) return checkOnly ? true : new DocxLoader(file).load()
     if (file.endsWith('.text')) return checkOnly ? true : new TextLoader(file).load()

@@ -22,7 +22,7 @@ export OPENAI_API_KEY=XXXXXXXX # Get from https://platform.openai.com/account/ap
 npx git@github.com:pathikrit/chatgpt-cli.git
 ```
 
-Alternatively, you can clone and run locally:
+Alternatively, you can clone and run:
 ```shell
 git clone git@github.com:pathikrit/chatgpt-cli.git
 cd chatgpt-cli
@@ -31,6 +31,26 @@ yarn && node app.js
 
 ## [Demo][demo]
 ![demo][demo]
+
+## Usage
+```
+System commands:
+  * clear / clr     : Clear chat history
+  * copy / cp       : Copy last message to clipboard
+  * history / h     : Show current history
+  * export          : Save current chat history as ChatML doc
+  * speak / say     : Speak out last response
+  * help / ?        : Show this message
+  * exit / quit / q : Exit the program
+
+Usage Tips:
+  - For multiline chats press PageDown
+  - Use Up/Down array keys to scrub through previous messages  
+  - Include [web] anywhere in your prompt to force web browsing
+  - Include [img] anywhere in your prompt to generate an image
+  - If you just enter a file or folder path, we will ingest text from it and add to context
+  - If entering path for document chat, use TAB to do path completion
+```
 
 ## Web Browsing
 Some queries depend on up-to-date info e.g.:
