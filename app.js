@@ -24,6 +24,7 @@ import say from 'say'                       // Text to speech for terminals
 // Web
 import { google } from 'googleapis'
 import got from 'got'
+import { URL } from 'url'
 
 // GPT stuff
 // TODO: Move to langchain client and prompt templates
@@ -42,6 +43,7 @@ import { loadSummarizationChain, AnalyzeDocumentChain } from 'langchain/chains'
 import { PDFLoader } from 'langchain/document_loaders/fs/pdf'
 import { TextLoader } from 'langchain/document_loaders/fs/text'
 import { DocxLoader } from 'langchain/document_loaders/fs/docx'
+import { PlaywrightWebBaseLoader } from 'langchain/document_loaders/web/playwright'
 
 const config = {
   chatApiParams: {
@@ -157,7 +159,17 @@ class DocChat {
 
   static isSupported = (file) => DocChat.toText(file, true)
 
+  static isValidUrl = (url) => {
+    try {
+      new URL(url)
+      return true
+    } catch (err) {
+      return false
+    }
+  }
+
   static toText = (file, checkOnly = false) => {
+    if (DocChat.isValidUrl(file)) return checkOnly ? true : new PlaywrightWebBaseLoader(file).load()
     file = untildify(file)
     if (!fs.existsSync(file)) return checkOnly ? false : Promise.reject(`Missing file: ${file}`)
     // TODO: support directories
@@ -165,7 +177,6 @@ class DocChat {
     //   const children = fs.readdirSync(file).filter(f => !fs.lstatSync(f).isDirectory())
     //   return checkOnly ? children.some(c => DocChat.toText(c, checkOnly)) : Promise.all(children.map(c => DocChat.toText))
     // }
-    // TODO: Support web page links
     if (file.endsWith('.pdf')) return checkOnly ? true : new PDFLoader(file).load()
     if (file.endsWith('.docx')) return checkOnly ? true : new DocxLoader(file).load()
     if (file.endsWith('.text')) return checkOnly ? true : new TextLoader(file).load()

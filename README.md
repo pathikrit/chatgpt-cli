@@ -48,7 +48,7 @@ Usage Tips:
   - Use Up/Down array keys to scrub through previous messages  
   - Include [web] anywhere in your prompt to force web browsing
   - Include [img] anywhere in your prompt to generate an image
-  - If you just enter a file or folder path, we will ingest text from it and add to context
+  - If you just enter a file or folder path or url, the program will ingest text from it and add to context
   - If entering path for document chat, use TAB to do path completion
 ```
 
@@ -88,6 +88,14 @@ Ray encourages readers to think for themselves and make clear-headed decisions i
 > What's the top management principle?
 ✔ Based on the snippets provided, it seems that Ray Dalio's management principles emphasize the importance of clear communication, delineation of responsibilities, logic and reason in decision-making, constant feedback and discussion, matching the right people to the job, synthesizing and connecting the dots, and a problem-solving approach. 
 ────────────────────────────────────────────────────────────────────────────────────
+```
+
+This supports webpages e.g.
+```
+> https://www.nytimes.com/2023/04/14/opinion/china-america-relationship.html
+✔ Ingested https://www.nytimes.com/2023/04/14/opinion/china-america-relationship.html. Here's a summary of first 10 pages:
+This article discusses the relationship between the United States and China, and how a trip to Beijing and Taiwan showed the author how the two countries are both fated to cooperate and doomed to compete.
+───────────────────────────────
 ```
 
 [demo]: https://vhs.charm.sh/vhs-1nlekNgIPQeC2hsGYK2191.gif

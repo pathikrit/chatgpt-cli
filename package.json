@@ -21,6 +21,7 @@
     "openai": "^3.2.1",
     "ora": "^6.3.0",
     "pdf-parse": "^1.1.1",
+    "playwright": "^1.32.3",
     "say": "^0.16.0",
     "terminal-image": "^2.0.0",
     "untildify": "^4.0.0"
