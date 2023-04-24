@@ -15,7 +15,7 @@ Type "yarn && node app.js" Enter Sleep 10s
 Type "Hi! My name is Rick!" Enter Sleep 20s
 Type "What's my name?" Enter Sleep 20s
 Type "clear" Enter Sleep 10s
-Type "What's my name?" Enter Sleep 20s
+Up@5s 2 Enter Sleep 20s
 Type "Write a python code to add 2 numbers" Enter Sleep 20s
 Type "copy" Enter Sleep 10s
 Type "How do humans make babies. Respond in emojis only" Enter Sleep 20s

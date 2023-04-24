@@ -244,7 +244,8 @@ const rl = readline.createInterface({
     const hits = systemCommands.filter(c => c.startsWith(line.toLowerCase().trim()))
     return [hits.length ? hits : systemCommands, line]
   }
-})
+}).on('close', () => console.log(prompts.info.onExit))
+
 // TODO: True multiline support e.g. pasting (Blocked by https://stackoverflow.com/questions/66604677/)
 process.stdin.on('keypress', (letter, key)=> {
   if (key?.name === 'pagedown') {
@@ -266,13 +267,8 @@ prompts.next()
 rl.on('line', (line) => {
   say.stop()
   switch (line.toLowerCase().trim()) {
-    case '': {
-      return prompts.next()
-    }
-    case 'q': case 'quit': case 'exit': {
-      console.log(prompts.info.onExit)
-      process.exit()
-    }
+    case '': return prompts.next()
+    case 'q': case 'quit': case 'exit': return rl.close()
     case '?': case 'help': {
       console.log(prompts.info.help)
       return prompts.next()
