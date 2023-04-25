@@ -177,9 +177,10 @@ class DocChat {
     //   const children = fs.readdirSync(file).filter(f => !fs.lstatSync(f).isDirectory())
     //   return checkOnly ? children.some(c => DocChat.toText(c, checkOnly)) : Promise.all(children.map(c => DocChat.toText))
     // }
-    if (file.endsWith('.pdf')) return checkOnly ? true : new PDFLoader(file).load()
+    if (file.endsWith('.html')) return checkOnly ? true : new PlaywrightWebBaseLoader(file).load()
+    if (file.endsWith('.pdf'))  return checkOnly ? true : new PDFLoader(file).load()
     if (file.endsWith('.docx')) return checkOnly ? true : new DocxLoader(file).load()
-    if (file.endsWith('.text')) return checkOnly ? true : new TextLoader(file).load()
+    if (file.endsWith('.text') || file.endsWith('.md')) return checkOnly ? true : new TextLoader(file).load()
     return checkOnly ? false : Promise.reject('Unsupported file type')
   }
 
