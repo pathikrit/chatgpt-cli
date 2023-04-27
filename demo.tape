@@ -24,6 +24,6 @@ Type " What's the price of AAPL?" Enter Sleep 60s
 Type "~/Downloads/principles.pdf" Enter Sleep 60s
 Type "What's the top management principle?" Enter Sleep 60s
 Type "https://www.nytimes.com/2023/04/14/opinion/china-america-relationship.html" Enter Sleep 60s
-Type "[img] Orange tabby cat wearing a party hat on a dark background" Enter Sleep 60s
+Type "[img] Orange cat wearing a hat" Enter Sleep 60s
 Type "export" Enter Sleep 20s
 Type "exit" Enter Sleep 10s

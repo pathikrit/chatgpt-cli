@@ -16,7 +16,6 @@ import readline from 'readline'
 import ora from 'ora'                       // Show spinners in terminal
 import chalk from 'chalk'                   // Terminal font colors
 import cliMd from 'cli-markdown'            // Show markdown in terminals
-import mdjs from '@moox/markdown-to-json'   // Display Help from README
 import terminalImage from 'terminal-image'  // Show images in terminals
 import clipboard from 'clipboardy'          // Terminal clipboard support
 import say from 'say'                       // Text to speech for terminals
@@ -124,9 +123,7 @@ Answer to best of your abilities the original query`,
     nothingToSay: 'No messages yet; nothing to say'
   },
   info: {
-    help: mdjs.markdownAsJsTree(fs.readFileSync('README.md', 'utf-8')).body.children
-      .flatMap(c => c.children && c.children[0]?.tag === 'code' ? c.children[0].children : [])
-      .find(c => c.includes('System commands')),
+    help: fs.readFileSync('README.md', 'utf-8').split('```text')[1].split('```')[0].trim(),
     exported: (file) => chalk.italic(`Saved chat history to ${file}`),
     onExit: chalk.italic('Bye!'),
     onClear: chalk.italic('Chat history cleared!'),

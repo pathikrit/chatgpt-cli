@@ -33,7 +33,7 @@ yarn && node app.js
 ![demo][demo]
 
 ## Usage
-```
+```text
 System commands:
   * clear / clr     : Clear chat history
   * copy / cp       : Copy last message to clipboard
@@ -98,4 +98,4 @@ This article discusses the relationship between the United States and China, and
 ───────────────────────────────
 ```
 
-[demo]: https://vhs.charm.sh/vhs-1nlekNgIPQeC2hsGYK2191.gif
+[demo]: https://vhs.charm.sh/vhs-45mJHC8C8oKUvoGPbKKvw9.gif
