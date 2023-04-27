@@ -48,8 +48,8 @@ Usage Tips:
   - Use Up/Down array keys to scrub through previous messages  
   - Include [web] anywhere in your prompt to force web browsing
   - Include [img] anywhere in your prompt to generate an image
-  - If you just enter a file or folder path or url, the program will ingest text from it and add to context
-  - If entering path for document chat, use TAB to do path completion
+  - Enter a local path or url, to ingest text from it and add to context
+  - Use TAB to do path completions when entering file (or folder path)
 ```
 
 ## Web Browsing
@@ -90,7 +90,7 @@ Ray encourages readers to think for themselves and make clear-headed decisions i
 ────────────────────────────────────────────────────────────────────────────────────
 ```
 
-This supports webpages e.g.
+### Chat with webpages
 ```
 > https://www.nytimes.com/2023/04/14/opinion/china-america-relationship.html
 ✔ Ingested https://www.nytimes.com/2023/04/14/opinion/china-america-relationship.html. Here's a summary of first 10 pages:
@@ -98,4 +98,4 @@ This article discusses the relationship between the United States and China, and
 ───────────────────────────────
 ```
 
-[demo]: https://vhs.charm.sh/vhs-45mJHC8C8oKUvoGPbKKvw9.gif
+[demo]: https://vhs.charm.sh/vhs-3qPd2uIBeQNNvWAGQr6xB1.gif
