@@ -98,4 +98,4 @@ This article discusses the relationship between the United States and China, and
 ───────────────────────────────
 ```
 
-[demo]: https://vhs.charm.sh/vhs-3qPd2uIBeQNNvWAGQr6xB1.gif
+[demo]: https://vhs.charm.sh/vhs-3QhGaO2lbGeWk1kj8FrpKD.gif

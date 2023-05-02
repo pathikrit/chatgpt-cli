@@ -298,6 +298,7 @@ rl.on('line', (line) => {
       console.log(prompts.info.exported(file))
       return prompts.next()
     }
+    // TODO case 'import': import saved history
     case 'say': case 'speak': {
       const content = history.lastMessage()?.content
       if (content) say.speak(content)
