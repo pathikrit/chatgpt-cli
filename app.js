@@ -70,20 +70,24 @@ const prompts = {
   },
   system: [
     'Always use code blocks with the appropriate language tags',
-    'If the answer may have changed since your cut-off date, simply reply with "I do not have real-time information" and nothing else'
+    'If the answer may have changed since your cut-off date, respond with provided function call to do a web search instead'
   ],
   imagePhrase: '[img]',
   webBrowsing: {
-    needed: [
-      "not have access to real-time",
-      "don't have access to real-time",
-      "don't have real-time",
-      "not able to provide real-time",
-      "not have real-time",
-      "as of my training data",
-      "as of september 2021",
-      "as of my programmed cut-off date"
-    ],
+    function: {
+      name: "do_web_search",
+      description: "Invoke this function with an appropriate search query if the answer may be outdated and needs more information from the web",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "Query string to trigger a web search"
+          }
+        },
+        required: ["query"],
+      }
+    },
     forcePhrase: '[web]',
 /***********************************************************************************************************************/
     preFacto: (query, result) => 
@@ -95,12 +99,12 @@ I also found the following web search results for the same query:
 If needed, feel free to augment your response with anything helpful from the above search results too.
 `,
 /***********************************************************************************************************************/
-    postFacto: (query, result) => 
+    postFacto: (query, originalQuestion, result) =>
 `I found the following up-to-date web search results for "${query}":
 
   ${result}
 
-Using the above search results, can you now take a best guess at answering ${query}. 
+Using the above search results, can you now take a best guess at answering the question ${originalQuestion}.
 Exclude the disclaimer note about this information might be inaccurate or subject to change.
 Be short and don't say "based on the search results". 
 Btw, the date and time right now is ${new Date().toLocaleString()}. Feel free to mention that in your response if needed.`
@@ -127,7 +131,7 @@ Answer to best of your abilities the original query`,
     exported: (file) => chalk.italic(`Saved chat history to ${file}`),
     onExit: chalk.italic('Bye!'),
     onClear: chalk.italic('Chat history cleared!'),
-    onSearch: chalk.italic(`Searching the web`),
+    onSearch: (query) => chalk.italic(`Searching the web for for "${query}" ...`),
     searchInfo: chalk.italic('(inferred from Google search)'),
     onQuery: chalk.italic(`Asking ${config.chatApiParams.model}`),
     onImage: chalk.italic(`Generating image`),
@@ -319,8 +323,8 @@ rl.on('line', (line) => {
       const chat = (params) => {
         const promptEngineer = () => {
           if (params.message.includes(prompts.webBrowsing.forcePhrase)) {
-            spinner.text = prompts.info.onSearch
             params.message = params.message.replace(prompts.webBrowsing.forcePhrase, ' ').trim()
+            spinner.text = prompts.info.onSearch(params.message)
             return googleSearch(params.message).then(result => prompts.webBrowsing.preFacto(params.message, result))
           } else if (docChat.hasDocs) {
             return docChat.query(params.message).then(docs => docs.length ? prompts.chatWithDoc(params.message, docs) : params.message)
@@ -331,19 +335,17 @@ rl.on('line', (line) => {
         const makeRequest = (prompt) => {
           spinner.text = prompts.info.onQuery
           history.add({role: Role.User, content: prompt})
-          return openai.createChatCompletion(Object.assign(config.chatApiParams, {messages: history.get()}))
+          const payload = Object.assign(config.chatApiParams, {messages: history.get(), functions: params.nested ? undefined : [prompts.webBrowsing.function]})
+          return openai.createChatCompletion(payload)
             .then(res => {
               const message = res.data.choices[0].message
-              history.add(message)
-              const content = message.content
-              const needWebBrowsing = !params.nested && prompts.webBrowsing.needed.some(frag => content.toLowerCase().includes(frag))
-              const output = cliMd(content).trim()
-              if (needWebBrowsing) {
-                spinner.warn(chalk.dim(output))
-                spinner = ora().start(prompts.info.onSearch)
-                //TODO: Ask gpt for a better query here
-                return googleSearch(params.message).then(text => chat({message: prompts.webBrowsing.postFacto(line, text), nested: true}))
+              if (message.function_call) {
+                const query = JSON.parse(message.function_call.arguments).query
+                spinner.text = prompts.info.onSearch(query)
+                return googleSearch(query).then(text => chat({message: prompts.webBrowsing.postFacto(query, prompt, text), nested: true}))
               }
+              history.add(message)
+              const output = cliMd(message.content).trim()
               spinner.stop()
               return Promise.resolve(console.log(output))
             })
